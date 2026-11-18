@@ -1,0 +1,1349 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perplexity</title>
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%2320808D'/><path d='M8 8h16v2H8zm0 7h16v2H8zm0 7h10v2H8z' fill='white'/></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="scorces/test.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+
+    <!-- ═══════════════════════ SIDEBAR ════════════════════════════ -->
+    <div id="sidebar">
+        <div class="sb-head">
+            <div class="logo-wrap">
+                <div class="logo-icon"><svg viewBox="0 0 24 24">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                    </svg></div>
+                <div class="logo-txt">Perplexity</div>
+            </div>
+        </div>
+
+        <button class="sb-new" id="new-chat-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            New Thread
+        </button>
+
+        <div class="sb-scroll">
+            <div class="sb-sec">Today</div>
+            <div id="hist-today"></div>
+            <div class="sb-sec" id="hist-older-label" style="display:none">Earlier</div>
+            <div id="hist-older"></div>
+        </div>
+
+        <div class="sb-footer">
+            <button class="sb-fbtn" onclick="openSettings()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3" />
+                    <path
+                        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                </svg>
+                Settings
+            </button>
+            <button class="u-btn" onclick="openLogin()">
+                <div class="u-av" id="u-av">G</div>
+                <div class="u-info">
+                    <div class="u-name" id="u-name">Guest User</div>
+                    <div class="u-plan" id="u-plan">Free · 5 queries/day</div>
+                </div>
+            </button>
+        </div>
+    </div>
+    <div class="mob-overlay" id="mob-overlay" onclick="closeSidebar()"></div>
+
+    <!-- ═══════════════════════ MAIN ════════════════════════════════ -->
+    <div id="main">
+
+        <!-- NAVBAR -->
+        <div id="navbar">
+            <button class="nb-toggle" onclick="toggleSidebar()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="3" y1="6" x2="21" y2="6" />
+                    <line x1="3" y1="12" x2="21" y2="12" />
+                    <line x1="3" y1="18" x2="21" y2="18" />
+                </svg>
+            </button>
+            <div class="nb-title" id="nb-title">New Thread</div>
+            <div class="nb-actions">
+
+                <!-- MODEL SELECTOR -->
+                <div class="model-selector" id="model-selector" onclick="toggleModelDrop()">
+                    <div class="model-dot" id="model-dot"></div>
+                    <span class="model-name" id="model-name-display">Sonar Pro</span>
+                    <svg class="model-arrow" id="model-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.5">
+                        <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                    <div class="model-dropdown" id="model-dropdown">
+                        <div class="md-header">Select Model</div>
+                        <div class="md-item selected" data-model="sonar-pro" onclick="selectModel(this)">
+                            <div class="md-icon" style="background:rgba(32,128,141,.15)">🔍</div>
+                            <div class="md-info">
+                                <div class="md-label">Sonar Pro</div>
+                                <div class="md-desc">Best accuracy · Real-time web</div>
+                            </div>
+                            <span class="md-badge">Default</span>
+                        </div>
+                        <div class="md-item" data-model="sonar" onclick="selectModel(this)">
+                            <div class="md-icon" style="background:rgba(32,128,141,.1)">⚡</div>
+                            <div class="md-info">
+                                <div class="md-label">Sonar</div>
+                                <div class="md-desc">Fast · Everyday queries</div>
+                            </div>
+                        </div>
+                        <div class="md-sep"></div>
+                        <div class="md-header">Research</div>
+                        <div class="md-item" data-model="deep-research" onclick="selectModel(this)">
+                            <div class="md-icon" style="background:rgba(168,85,247,.15)">🧠</div>
+                            <div class="md-info">
+                                <div class="md-label">Deep Research</div>
+                                <div class="md-desc">Multi-step · Long reports</div>
+                            </div>
+                            <span class="md-badge"
+                                style="background:rgba(168,85,247,.15);color:#c084fc;border-color:rgba(168,85,247,.2)">Pro</span>
+                        </div>
+                        <div class="md-item" data-model="r1" onclick="selectModel(this)">
+                            <div class="md-icon" style="background:rgba(245,158,11,.12)">💡</div>
+                            <div class="md-info">
+                                <div class="md-label">R1 Reasoning</div>
+                                <div class="md-desc">Chain-of-thought · Complex logic</div>
+                            </div>
+                            <span class="md-badge"
+                                style="background:rgba(245,158,11,.12);color:#fbbf24;border-color:rgba(245,158,11,.2)">Pro</span>
+                        </div>
+                        <div class="md-sep"></div>
+                        <div class="md-header">Writing</div>
+                        <div class="md-item" data-model="claude" onclick="selectModel(this)">
+                            <div class="md-icon" style="background:rgba(232,121,56,.12)">✍️</div>
+                            <div class="md-info">
+                                <div class="md-label">Claude Sonnet</div>
+                                <div class="md-desc">Creative writing · Nuanced answers</div>
+                            </div>
+                        </div>
+                        <div class="md-item" data-model="gpt4o" onclick="selectModel(this)">
+                            <div class="md-icon" style="background:rgba(16,185,129,.12)">🤖</div>
+                            <div class="md-info">
+                                <div class="md-label">GPT-4o</div>
+                                <div class="md-desc">Multimodal · Broad knowledge</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="nb-btn" id="share-btn" style="display:none" onclick="shareThread()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="18" cy="5" r="3" />
+                        <circle cx="6" cy="12" r="3" />
+                        <circle cx="18" cy="19" r="3" />
+                        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                    </svg>
+                    Share
+                </button>
+                <button class="nb-icon" title="Sign in" onclick="openLogin()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                        <circle cx="12" cy="7" r="4" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- CHAT AREA -->
+        <div id="chat-area">
+
+            <!-- HOME SCREEN -->
+            <div id="home">
+                <div class="home-hero">
+                    <div class="home-icon"><svg viewBox="0 0 24 24">
+                            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                        </svg></div>
+                    <div class="home-title">Ask <em>anything</em>, know everything</div>
+                    <div class="home-sub">AI-powered answers with real sources. Search smarter.</div>
+                </div>
+
+                <div class="home-input">
+                    <div class="input-box" id="home-input-box">
+                        <div class="ib-top">
+                            <textarea class="qi" id="home-qi" placeholder="Ask anything..." rows="1"></textarea>
+                        </div>
+                        <div class="ib-bot">
+                            <button class="ib-act" id="focus-btn" onclick="toggleFocus(this)">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="11" cy="11" r="8" />
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                                </svg>
+                                Focus
+                            </button>
+                            <button class="ib-act" id="web-btn" onclick="toggleWeb(this)">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10" />
+                                    <line x1="2" y1="12" x2="22" y2="12" />
+                                    <path
+                                        d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                                </svg>
+                                Web
+                            </button>
+                            <button class="ib-act" onclick="triggerAttach()">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path
+                                        d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+                                </svg>
+                                Attach
+                            </button>
+                            <div class="ib-spacer"></div>
+                            <button class="send-btn" id="home-send" onclick="handleHomeSend()">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M22 2L11 13M22 2L15 22 11 13 2 9l20-7z" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chips">
+                    <button class="chip" onclick="setQ('What are the biggest AI breakthroughs in 2025?')"><svg
+                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path
+                                d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 1 1 7.072 0l-.548.547A3.374 3.374 0 0 0 14 18.469V19a2 2 0 1 1-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                        </svg>AI breakthroughs</button>
+                    <button class="chip" onclick="setQ('How does quantum computing work?')"><svg viewBox="0 0 24 24"
+                            fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="2" y="3" width="20" height="14" rx="2" />
+                            <line x1="8" y1="21" x2="16" y2="21" />
+                            <line x1="12" y1="17" x2="12" y2="21" />
+                        </svg>Quantum computing</button>
+                    <button class="chip" onclick="setQ('Best programming languages to learn in 2025?')"><svg
+                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="16 18 22 12 16 6" />
+                            <polyline points="8 6 2 12 8 18" />
+                        </svg>Top languages 2025</button>
+                    <button class="chip" onclick="setQ('What did James Webb Space Telescope discover?')"><svg
+                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="2" y1="12" x2="22" y2="12" />
+                            <path
+                                d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                        </svg>Space discoveries</button>
+                    <button class="chip" onclick="setQ('What is the best diet for longevity and health?')"><svg
+                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path
+                                d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                        </svg>Longevity & diet</button>
+                    <button class="chip" onclick="setQ('Explain large language models and transformers')"><svg
+                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path
+                                d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                        </svg>LLMs explained</button>
+                </div>
+            </div>
+
+            <!-- CHAT VIEW -->
+            <div id="chat-view" style="display:none">
+                <div class="chat-wrap" id="chat-wrap"></div>
+            </div>
+
+        </div><!-- end chat-area -->
+
+        <!-- BOTTOM BAR -->
+        <div id="bottom-bar" style="display:none">
+            <div class="input-box" id="chat-input-box">
+                <div class="ib-top">
+                    <textarea class="qi" id="chat-qi" placeholder="Ask a follow-up..." rows="1"></textarea>
+                </div>
+                <div class="ib-bot">
+                    <button class="ib-act" onclick="toggleFocus(this)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8" />
+                            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                        </svg>
+                        Focus
+                    </button>
+                    <button class="ib-act" onclick="toggleWeb(this)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="2" y1="12" x2="22" y2="12" />
+                            <path
+                                d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                        </svg>
+                        Web
+                    </button>
+                    <div class="ib-spacer"></div>
+                    <span style="font-size:10.5px;color:var(--text4);margin-right:4px" id="char-count"></span>
+                    <button class="send-btn" id="chat-send" onclick="handleChatSend()">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M22 2L11 13M22 2L15 22 11 13 2 9l20-7z" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- end main -->
+
+    <!-- ═══════════════════════ LOGIN MODAL ════════════════════════ -->
+    <div class="overlay" id="login-modal" onclick="if(event.target===this)closeLogin()">
+        <div class="modal">
+            <button class="modal-x" onclick="closeLogin()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+            </button>
+            <div class="modal-logo">
+                <div class="logo-icon"><svg viewBox="0 0 24 24" style="width:13px;height:13px;fill:white">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                    </svg></div>
+                <div class="logo-txt">Perplexity</div>
+            </div>
+            <div class="modal-h">Welcome back</div>
+            <p class="modal-p">Sign in to sync your threads, unlock unlimited queries, and access Pro models.</p>
+            <button class="g-btn" onclick="loginGoogle()">
+                <svg viewBox="0 0 24 24" width="17" height="17">
+                    <path
+                        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                        fill="#4285F4" />
+                    <path
+                        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                        fill="#34A853" />
+                    <path
+                        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                        fill="#FBBC05" />
+                    <path
+                        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                        fill="#EA4335" />
+                </svg>
+                Continue with Google
+            </button>
+            <div class="divider"><span>or continue with email</span></div>
+            <input class="m-input" type="email" placeholder="Email address" id="m-email" autocomplete="email">
+            <input class="m-input" type="password" placeholder="Password" id="m-pass" autocomplete="current-password">
+            <button class="m-btn" onclick="loginEmail()">Sign in</button>
+            <div class="m-foot">
+                New? <a onclick="loginEmail()">Create a free account</a><br><br>
+                <a href="#">Terms of Service</a> · <a href="#">Privacy Policy</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════ SETTINGS ═══════════════════════════ -->
+    <div id="settings" onclick="if(event.target===this)closeSettings()">
+        <div class="settings-sheet">
+            <div class="sh"></div>
+            <div class="s-title">Settings</div>
+
+            <div class="s-grp">
+                <div class="s-grp-lbl">Appearance</div>
+                <div class="s-row">
+                    <div class="s-row-info">
+                        <div class="s-row-lbl">Dark mode</div>
+                        <div class="s-row-desc">Always use dark theme</div>
+                    </div>
+                    <div class="tog on" onclick="this.classList.toggle('on')"></div>
+                </div>
+                <div class="s-row">
+                    <div class="s-row-info">
+                        <div class="s-row-lbl">Compact density</div>
+                        <div class="s-row-desc">Reduce spacing between messages</div>
+                    </div>
+                    <div class="tog" onclick="this.classList.toggle('on')"></div>
+                </div>
+                <div class="s-row">
+                    <div class="s-row-info">
+                        <div class="s-row-lbl">Font size</div>
+                        <div class="s-row-desc">Adjust response text size</div>
+                    </div>
+                    <select class="s-sel" onchange="changeFontSize(this.value)">
+                        <option value="sm">Small</option>
+                        <option value="md" selected>Medium</option>
+                        <option value="lg">Large</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="s-grp">
+                <div class="s-grp-lbl">AI & Search</div>
+                <div class="s-row">
+                    <div class="s-row-info">
+                        <div class="s-row-lbl">Streaming responses</div>
+                        <div class="s-row-desc">Show text word by word as generated</div>
+                    </div>
+                    <div class="tog on" id="stream-tog" onclick="this.classList.toggle('on')"></div>
+                </div>
+                <div class="s-row">
+                    <div class="s-row-info">
+                        <div class="s-row-lbl">Show sources</div>
+                        <div class="s-row-desc">Display reference cards below answers</div>
+                    </div>
+                    <div class="tog on" id="src-tog" onclick="this.classList.toggle('on')"></div>
+                </div>
+                <div class="s-row">
+                    <div class="s-row-info">
+                        <div class="s-row-lbl">Related questions</div>
+                        <div class="s-row-desc">Show follow-up suggestions after answers</div>
+                    </div>
+                    <div class="tog on" id="related-tog" onclick="this.classList.toggle('on')"></div>
+                </div>
+                <div class="s-row">
+                    <div class="s-row-info">
+                        <div class="s-row-lbl">Default focus</div>
+                        <div class="s-row-desc">Search scope preference</div>
+                    </div>
+                    <select class="s-sel">
+                        <option selected>All</option>
+                        <option>Academic</option>
+                        <option>Writing</option>
+                        <option>Code</option>
+                        <option>Wolfram|Alpha</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="s-grp">
+                <div class="s-grp-lbl">Privacy & Data</div>
+                <div class="s-row">
+                    <div class="s-row-info">
+                        <div class="s-row-lbl">Save history</div>
+                        <div class="s-row-desc">Store threads in localStorage</div>
+                    </div>
+                    <div class="tog on" onclick="this.classList.toggle('on')"></div>
+                </div>
+                <div class="s-row">
+                    <div class="s-row-info">
+                        <div class="s-row-lbl">Analytics</div>
+                        <div class="s-row-desc">Share anonymous usage data</div>
+                    </div>
+                    <div class="tog" onclick="this.classList.toggle('on')"></div>
+                </div>
+            </div>
+
+            <div class="s-grp">
+                <div class="s-grp-lbl">Account</div>
+                <div class="s-row">
+                    <div class="s-row-info">
+                        <div class="s-row-lbl">Clear all history</div>
+                        <div class="s-row-desc">Permanently delete all saved threads</div>
+                    </div>
+                    <button class="danger-btn" onclick="clearHistory()">Clear all</button>
+                </div>
+                <div class="s-row">
+                    <div class="s-row-info">
+                        <div class="s-row-lbl">Export data</div>
+                        <div class="s-row-desc">Download all your conversations as JSON</div>
+                    </div>
+                    <button class="danger-btn" style="border-color:var(--accent);color:var(--accent)"
+                        onclick="exportData()">Export</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast"></div>
+    <input type="file" id="file-input" style="display:none" accept="image/*,.pdf,.txt,.md">
+
+    <script>
+        // ═══════════════════════ STATE ══════════════════════════════════
+        let state = {
+            chats: JSON.parse(localStorage.getItem('px_chats') || '[]'),
+            current: null,
+            streaming: false,
+            streamAbort: null,
+            model: { id: 'sonar-pro', name: 'Sonar Pro', dot: '#20808d' },
+            focusOn: false,
+            webOn: true,
+            loggedIn: false,
+            user: { name: 'Guest User', initial: 'G', plan: 'Free · 5 queries/day' }
+        };
+
+        const MODELS = {
+            'sonar-pro': { name: 'Sonar Pro', dot: '#20808d' },
+            'sonar': { name: 'Sonar', dot: '#20808d' },
+            'deep-research': { name: 'Deep Research', dot: '#a855f7' },
+            'r1': { name: 'R1 Reasoning', dot: '#f59e0b' },
+            'claude': { name: 'Claude Sonnet', dot: '#e87838' },
+            'gpt4o': { name: 'GPT-4o', dot: '#22c55e' },
+        };
+
+        // ═══════════════════════ INIT ════════════════════════════════════
+        document.addEventListener('DOMContentLoaded', () => {
+            setupTA('home-qi', handleHomeSend);
+            setupTA('chat-qi', handleChatSend);
+            renderHistory();
+            if (window.innerWidth <= 768) closeSidebarDesktop();
+            window.addEventListener('resize', () => { if (window.innerWidth <= 768) closeSidebarDesktop(); });
+            document.getElementById('chat-qi').addEventListener('input', updateCharCount);
+            document.addEventListener('click', e => {
+                if (!document.getElementById('model-selector').contains(e.target))
+                    closeModelDrop();
+            });
+        });
+
+        function setupTA(id, onEnter) {
+            const ta = document.getElementById(id);
+            if (!ta) return;
+            ta.addEventListener('input', () => { growTA(ta); });
+            ta.addEventListener('keydown', e => {
+                if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onEnter(); }
+            });
+        }
+        function growTA(ta) {
+            ta.style.height = 'auto';
+            ta.style.height = Math.min(ta.scrollHeight, 200) + 'px';
+        }
+        function updateCharCount() {
+            const ta = document.getElementById('chat-qi');
+            const n = ta.value.length;
+            const el = document.getElementById('char-count');
+            el.textContent = n > 100 ? n : '';
+        }
+
+        // ═══════════════════════ SIDEBAR ════════════════════════════════
+        function toggleSidebar() {
+            if (window.innerWidth <= 768) {
+                const s = document.getElementById('sidebar');
+                const o = document.getElementById('mob-overlay');
+                s.classList.toggle('mob-open');
+                o.classList.toggle('show');
+            } else {
+                const s = document.getElementById('sidebar');
+                s.classList.toggle('collapsed');
+            }
+        }
+        function closeSidebar() {
+            document.getElementById('sidebar').classList.remove('mob-open');
+            document.getElementById('mob-overlay').classList.remove('show');
+        }
+        function closeSidebarDesktop() {
+            document.getElementById('sidebar').classList.add('collapsed');
+        }
+
+        // ═══════════════════════ HISTORY ════════════════════════════════
+        function renderHistory() {
+            const today = state.chats.filter(c => isToday(c.ts));
+            const older = state.chats.filter(c => !isToday(c.ts));
+            document.getElementById('hist-today').innerHTML = today.map(histHTML).join('');
+            document.getElementById('hist-older').innerHTML = older.map(histHTML).join('');
+            document.getElementById('hist-older-label').style.display = older.length ? '' : 'none';
+        }
+        function histHTML(c) {
+            const active = state.current?.id === c.id ? 'active' : '';
+            return `<div class="hi ${active}" onclick="loadChat('${c.id}')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    <span>${esc(c.title)}</span>
+    <button class="hd" onclick="delChat('${c.id}',event)" title="Delete">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="12" height="12"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+    </button>
+  </div>`;
+        }
+        function isToday(ts) {
+            return new Date(ts).toDateString() === new Date().toDateString();
+        }
+        function delChat(id, e) {
+            e.stopPropagation();
+            state.chats = state.chats.filter(c => c.id !== id);
+            save();
+            if (state.current?.id === id) newChat();
+            else renderHistory();
+        }
+        function clearHistory() {
+            if (!confirm('Delete all chat history? This cannot be undone.')) return;
+            state.chats = []; save(); newChat(); closeSettings(); toast('History cleared');
+        }
+        function exportData() {
+            const blob = new Blob([JSON.stringify(state.chats, null, 2)], { type: 'application/json' });
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+            a.download = 'perplexity-export.json'; a.click();
+            toast('Data exported');
+        }
+        function save() { localStorage.setItem('px_chats', JSON.stringify(state.chats)); renderHistory(); }
+
+        // ═══════════════════════ CHAT MGMT ══════════════════════════════
+        function newChat() {
+            if (state.streaming) stopStream();
+            state.current = null;
+            document.getElementById('home').style.display = '';
+            document.getElementById('chat-view').style.display = 'none';
+            document.getElementById('bottom-bar').style.display = 'none';
+            document.getElementById('share-btn').style.display = 'none';
+            document.getElementById('nb-title').textContent = 'New Thread';
+            document.getElementById('home-qi').value = ''; growTA(document.getElementById('home-qi'));
+            renderHistory(); closeSidebar();
+        }
+        document.getElementById('new-chat-btn').addEventListener('click', newChat);
+
+        function loadChat(id) {
+            const chat = state.chats.find(c => c.id === id);
+            if (!chat) return;
+            if (state.streaming) stopStream();
+            state.current = chat;
+            showChatUI();
+            const wrap = document.getElementById('chat-wrap');
+            wrap.innerHTML = '';
+            chat.messages.forEach(m => {
+                if (m.role === 'user') wrap.appendChild(mkUserBubble(m.content));
+                else wrap.appendChild(mkAiBubble(m.content, m.sources || [], m.related || [], m.model || 'Sonar Pro', false));
+            });
+            document.getElementById('nb-title').textContent = chat.title;
+            renderHistory(); scrollBot(); closeSidebar();
+            setTimeout(() => document.getElementById('chat-qi').focus(), 100);
+        }
+
+        function showChatUI() {
+            document.getElementById('home').style.display = 'none';
+            document.getElementById('chat-view').style.display = 'block';
+            document.getElementById('bottom-bar').style.display = 'block';
+            document.getElementById('share-btn').style.display = 'flex';
+        }
+
+        // ═══════════════════════ SEND ════════════════════════════════════
+        function handleHomeSend() {
+            const ta = document.getElementById('home-qi');
+            const text = ta.value.trim();
+            if (!text || state.streaming) return;
+            ta.value = ''; growTA(ta);
+            beginChat(text);
+        }
+        function handleChatSend() {
+            if (state.streaming) { stopStream(); return; }
+            const ta = document.getElementById('chat-qi');
+            const text = ta.value.trim();
+            if (!text) return;
+            ta.value = ''; growTA(ta); updateCharCount();
+            addTurn(text);
+        }
+        function setQ(text) {
+            document.getElementById('home-qi').value = text;
+            growTA(document.getElementById('home-qi'));
+            document.getElementById('home-qi').focus();
+        }
+
+        async function beginChat(text) {
+            state.current = {
+                id: Date.now().toString(),
+                title: text.slice(0, 52) + (text.length > 52 ? '…' : ''),
+                ts: Date.now(),
+                messages: []
+            };
+            state.chats.unshift(state.current);
+            save(); showChatUI();
+            addTurn(text);
+        }
+
+        async function addTurn(text) {
+            if (state.streaming) return;
+            state.streaming = true;
+            updateSendBtns(true);
+
+            const wrap = document.getElementById('chat-wrap');
+            state.current.messages.push({ role: 'user', content: text });
+            wrap.appendChild(mkUserBubble(text));
+            scrollBot();
+
+            // Typing indicator
+            const aiGroup = document.createElement('div');
+            aiGroup.className = 'msg-group';
+            aiGroup.innerHTML = `<div class="ai-msg">
+    <div class="ai-head">
+      <div class="ai-av"><svg viewBox="0 0 24 24" style="width:13px;height:13px;fill:white"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
+      Perplexity
+      <span class="model-tag">${state.model.name}</span>
+    </div>
+    <div class="typing-wrap"><div class="dots"><span></span><span></span><span></span></div><span>Searching the web…</span></div>
+  </div>`;
+            wrap.appendChild(aiGroup);
+            scrollBot();
+
+            await delay(480);
+
+            const sources = pickSources();
+            const response = genResponse(text);
+            const related = genRelated(text);
+
+            // Replace typing with skeleton
+            aiGroup.querySelector('.ai-msg').innerHTML = `
+    <div class="ai-head">
+      <div class="ai-av"><svg viewBox="0 0 24 24" style="width:13px;height:13px;fill:white"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
+      Perplexity <span class="model-tag">${state.model.name}</span>
+    </div>
+    ${mkSourcesHTML(sources)}
+    <div class="skel">
+      <div class="sl" style="width:92%"></div>
+      <div class="sl" style="width:78%"></div>
+      <div class="sl" style="width:85%"></div>
+      <div class="sl" style="width:60%"></div>
+    </div>`;
+            scrollBot();
+            await delay(550);
+
+            // Streaming content
+            const bodyDiv = document.createElement('div');
+            bodyDiv.className = 'ai-body';
+            aiGroup.querySelector('.skel').replaceWith(bodyDiv);
+
+            await streamContent(bodyDiv, response);
+
+            // Actions
+            const actsDiv = mkActions(response, aiGroup);
+            aiGroup.querySelector('.ai-msg').appendChild(actsDiv);
+
+            // Related questions
+            const relDiv = mkRelated(related);
+            aiGroup.querySelector('.ai-msg').appendChild(relDiv);
+
+            // Save
+            state.current.messages.push({ role: 'assistant', content: response, sources, related, model: state.model.name });
+            state.current.ts = Date.now();
+            save();
+            document.getElementById('nb-title').textContent = state.current.title;
+
+            state.streaming = false;
+            updateSendBtns(false);
+            scrollBot();
+            setTimeout(() => document.getElementById('chat-qi')?.focus(), 80);
+        }
+
+        function stopStream() {
+            if (state.streamAbort) state.streamAbort();
+            state.streaming = false; updateSendBtns(false);
+        }
+
+        function updateSendBtns(streaming) {
+            ['home-send', 'chat-send'].forEach(id => {
+                const btn = document.getElementById(id); if (!btn) return;
+                if (id === 'chat-send') {
+                    btn.classList.toggle('stop-mode', streaming);
+                    btn.innerHTML = streaming
+                        ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>`
+                        : `<svg viewBox="0 0 24 24"><path d="M22 2L11 13M22 2L15 22 11 13 2 9l20-7z"/></svg>`;
+                }
+                btn.disabled = id === 'home-send' ? streaming : false;
+            });
+        }
+
+        // ═══════════════════════ STREAM ══════════════════════════════════
+        async function streamContent(container, text) {
+            const html = md2html(text);
+            const words = html.split(/(?<=[ \n])/);
+            let aborted = false;
+            state.streamAbort = () => { aborted = true; };
+
+            let acc = '';
+            const cur = document.createElement('span');
+            cur.className = 'stream-cur';
+
+            for (let i = 0; i < words.length; i++) {
+                if (aborted) break;
+                acc += words[i];
+                container.innerHTML = acc;
+                container.appendChild(cur);
+                scrollBot();
+                const spd = i < 10 ? 20 : Math.random() * 12 + 6;
+                await delay(spd);
+            }
+            container.innerHTML = html;
+            applyCodeHandlers(container);
+            state.streamAbort = null;
+        }
+
+        // ═══════════════════════ BUILDERS ════════════════════════════════
+        function mkUserBubble(text) {
+            const d = document.createElement('div');
+            d.className = 'msg-group';
+            d.innerHTML = `<div class="u-msg"><div class="u-bubble">${esc(text)}</div></div>`;
+            return d;
+        }
+
+        function mkAiBubble(content, sources, related, modelName, animate) {
+            const d = document.createElement('div');
+            d.className = 'msg-group';
+            if (animate) d.style.animation = 'slideUp .28s ease';
+            d.innerHTML = `<div class="ai-msg">
+    <div class="ai-head">
+      <div class="ai-av"><svg viewBox="0 0 24 24" style="width:13px;height:13px;fill:white"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
+      Perplexity <span class="model-tag">${esc(modelName || 'Sonar Pro')}</span>
+    </div>
+    ${mkSourcesHTML(sources)}
+    <div class="ai-body">${md2html(content)}</div>
+    ${mkActionsHTML(content)}
+    ${mkRelatedHTML(related)}
+  </div>`;
+            applyCodeHandlers(d);
+            d.querySelectorAll('.rq').forEach(el => {
+                el.addEventListener('click', () => {
+                    const q = el.getAttribute('data-q');
+                    document.getElementById('chat-qi').value = q;
+                    growTA(document.getElementById('chat-qi'));
+                    handleChatSend();
+                });
+            });
+            return d;
+        }
+
+        function mkSourcesHTML(sources) {
+            if (!sources || !sources.length) return '';
+            return `<div class="src-grid">${sources.map((s, i) => `
+    <div class="src-card" title="${esc(s.url)}">
+      <div style="display:flex;align-items:center;gap:6px">
+        <div class="src-num">${i + 1}</div>
+        <span class="src-fav">${s.fav}</span>
+      </div>
+      <div class="src-title">${esc(s.title)}</div>
+      <div class="src-url">${esc(s.url)}</div>
+    </div>`).join('')}</div>`;
+        }
+
+        function mkRelated(related) {
+            const d = document.createElement('div');
+            d.innerHTML = mkRelatedHTML(related);
+            d.querySelectorAll('.rq').forEach(el => {
+                el.addEventListener('click', () => {
+                    const q = el.getAttribute('data-q');
+                    document.getElementById('chat-qi').value = q;
+                    growTA(document.getElementById('chat-qi'));
+                    document.getElementById('chat-qi').focus();
+                    handleChatSend();
+                });
+            });
+            return d;
+        }
+
+        function mkRelatedHTML(related) {
+            if (!related || !related.length) return '';
+            const items = related.map(q => `
+    <div class="rq" data-q="${esc(q)}">
+      <div class="rq-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+      <div class="rq-text">${esc(q)}</div>
+      <svg class="rq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>`).join('');
+            return `<div class="related-wrap">
+    <div class="related-head" onclick="toggleRelated(this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      Related
+      <svg class="related-toggle open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+    <div class="related-list">${items}</div>
+  </div>`;
+        }
+
+        function toggleRelated(head) {
+            const tog = head.querySelector('.related-toggle');
+            const list = head.nextElementSibling;
+            const open = tog.classList.contains('open');
+            tog.classList.toggle('open', !open);
+            list.style.display = open ? 'none' : '';
+        }
+
+        function mkActions(content, group) {
+            const d = document.createElement('div');
+            d.className = 'ai-acts';
+            d.innerHTML = mkActionsHTML(content);
+            wireActions(d, content);
+            return d;
+        }
+
+        function mkActionsHTML(content) {
+            return `<div class="ai-acts">
+    <button class="ai-act" onclick="copyAct(this,\`${esc2(content)}\`)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy
+    </button>
+    <button class="ai-act" onclick="regenAct(this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>Retry
+    </button>
+    <button class="ai-act" onclick="thumbAct(this,'up')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
+    </button>
+    <button class="ai-act" onclick="thumbAct(this,'down')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z"/><path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg>
+    </button>
+    <button class="ai-act" onclick="shareAct()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>Share
+    </button>
+  </div>`;
+        }
+
+        function wireActions(d, content) {
+            // already using inline onclick, but ensure rq clicks wire too
+        }
+
+        function applyCodeHandlers(root) {
+            root.querySelectorAll('.cb-btn[data-action="copy"]').forEach(btn => {
+                btn.onclick = () => copyCode(btn);
+            });
+        }
+
+        // ═══════════════════════ ACTIONS ════════════════════════════════
+        function copyAct(btn, text) {
+            navigator.clipboard.writeText(text).then(() => {
+                const orig = btn.innerHTML;
+                btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><polyline points="20 6 9 17 4 12"/></svg>Copied!`;
+                btn.classList.add('active');
+                setTimeout(() => { btn.innerHTML = orig; btn.classList.remove('active'); }, 2000);
+            });
+        }
+        function regenAct(btn) {
+            toast('Regenerating response…');
+            const last = state.current?.messages.filter(m => m.role === 'user').slice(-1)[0];
+            if (last && !state.streaming) {
+                // Remove last AI message from DOM and state for re-gen
+                const groups = document.querySelectorAll('#chat-wrap .msg-group');
+                if (groups.length >= 2) groups[groups.length - 1].remove();
+                state.current.messages = state.current.messages.slice(0, -1);
+                addTurn(last.content);
+            }
+        }
+        function thumbAct(btn, dir) {
+            btn.classList.toggle('active');
+            toast(dir === 'up' ? 'Positive feedback recorded' : 'Feedback noted — we\'ll improve');
+        }
+        function shareAct() { shareThread(); }
+        function copyCode(btn) {
+            const code = btn.closest('.code-block').querySelector('pre code').textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                const orig = btn.innerHTML;
+                btn.classList.add('copied');
+                btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Copied!`;
+                setTimeout(() => { btn.classList.remove('copied'); btn.innerHTML = orig; }, 2000);
+            });
+        }
+        function shareThread() {
+            navigator.clipboard.writeText(window.location.href).then(() => toast('Thread link copied to clipboard'));
+        }
+        function triggerAttach() {
+            document.getElementById('file-input').click();
+            document.getElementById('file-input').onchange = e => {
+                const f = e.target.files[0]; if (!f) return;
+                toast(`Attached: ${f.name}`);
+                e.target.value = '';
+            };
+        }
+
+        // ═══════════════════════ TOGGLES ════════════════════════════════
+        function toggleFocus(btn) {
+            btn.classList.toggle('active');
+            const on = btn.classList.contains('active');
+            toast(on ? 'Focus: Academic search enabled' : 'Focus: All sources');
+        }
+        function toggleWeb(btn) {
+            btn.classList.toggle('active');
+            state.webOn = btn.classList.contains('active');
+            toast(state.webOn ? 'Web search on' : 'Web search off');
+        }
+
+        // ═══════════════════════ MODEL SELECTOR ══════════════════════════
+        function toggleModelDrop() {
+            const sel = document.getElementById('model-selector');
+            const dd = document.getElementById('model-dropdown');
+            const open = dd.classList.contains('open');
+            dd.classList.toggle('open', !open);
+            sel.classList.toggle('open', !open);
+            document.getElementById('model-arrow').style.color = open ? '' : 'var(--accent)';
+        }
+        function closeModelDrop() {
+            document.getElementById('model-dropdown').classList.remove('open');
+            document.getElementById('model-selector').classList.remove('open');
+            document.getElementById('model-arrow').style.color = '';
+        }
+        function selectModel(el) {
+            // Deselect all
+            document.querySelectorAll('.md-item').forEach(i => i.classList.remove('selected'));
+            el.classList.add('selected');
+            const id = el.getAttribute('data-model');
+            const m = MODELS[id];
+            state.model = { id, name: m.name, dot: m.dot };
+            document.getElementById('model-name-display').textContent = m.name;
+            document.getElementById('model-dot').style.background = m.dot;
+            document.getElementById('model-dot').style.boxShadow = `0 0 6px ${m.dot}80`;
+            closeModelDrop();
+            toast(`Model: ${m.name}`);
+        }
+
+        // ═══════════════════════ FONT SIZE ══════════════════════════════
+        function changeFontSize(v) {
+            const sz = { sm: '13.5px', md: '14.5px', lg: '16px' };
+            document.querySelectorAll('.ai-body').forEach(el => el.style.fontSize = sz[v]);
+        }
+
+        // ═══════════════════════ LOGIN ═══════════════════════════════════
+        function openLogin() { document.getElementById('login-modal').classList.add('open'); }
+        function closeLogin() { document.getElementById('login-modal').classList.remove('open'); }
+        function loginGoogle() {
+            state.loggedIn = true; state.user = { name: 'Alex Johnson', initial: 'AJ', plan: 'Pro · Unlimited' };
+            applyUser(); closeLogin(); toast('Signed in as Alex Johnson');
+        }
+        function loginEmail() {
+            const em = document.getElementById('m-email').value || 'user@example.com';
+            const name = em.split('@')[0];
+            state.loggedIn = true; state.user = { name, initial: name[0].toUpperCase(), plan: 'Free · 5 queries/day' };
+            applyUser(); closeLogin(); toast('Signed in as ' + name);
+        }
+        function applyUser() {
+            document.getElementById('u-av').textContent = state.user.initial;
+            document.getElementById('u-name').textContent = state.user.name;
+            document.getElementById('u-plan').textContent = state.user.plan;
+        }
+
+        // ═══════════════════════ SETTINGS ════════════════════════════════
+        function openSettings() { document.getElementById('settings').classList.add('open'); }
+        function closeSettings() { document.getElementById('settings').classList.remove('open'); }
+
+        // ═══════════════════════ UTIL ════════════════════════════════════
+        function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+        function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
+        function esc2(s) { return String(s).replace(/`/g, '\\`').replace(/\$/g, '\\$'); }
+        function scrollBot() { const a = document.getElementById('chat-area'); a.scrollTo({ top: a.scrollHeight, behavior: 'smooth' }); }
+        function toast(msg, d = 2600) {
+            const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show');
+            clearTimeout(t._to); t._to = setTimeout(() => t.classList.remove('show'), d);
+        }
+
+        // ═══════════════════════ MARKDOWN ════════════════════════════════
+        function md2html(md) {
+            let h = md;
+            // Code blocks first
+            h = h.replace(/```(\w*)\n?([\s\S]*?)```/g, (_, lang, code) => {
+                const lines = code.trim().split('\n');
+                const numbered = lines.map((l, i) => `<span class="ln">${i + 1}</span>${synHL(esc(l), lang)}`).join('\n');
+                return `<div class="code-block">
+      <div class="cb-head">
+        <span class="cb-lang">${lang || 'code'}</span>
+        <div class="cb-actions">
+          <button class="cb-btn" data-action="copy" onclick="copyCode(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy</button>
+        </div>
+      </div>
+      <pre><code>${numbered}</code></pre>
+    </div>`;
+            });
+            // Inline code
+            h = h.replace(/`([^`\n]+)`/g, '<code>$1</code>');
+            // Bold/italic
+            h = h.replace(/\*\*\*(.+?)\*\*\*/gs, '<strong><em>$1</em></strong>');
+            h = h.replace(/\*\*(.+?)\*\*/gs, '<strong>$1</strong>');
+            h = h.replace(/\*([^*\n]+)\*/g, '<em>$1</em>');
+            // Headers
+            h = h.replace(/^#### (.+)$/gm, '<h4>$1</h4>');
+            h = h.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+            h = h.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+            h = h.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+            // Blockquote
+            h = h.replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>');
+            // HR
+            h = h.replace(/^---$/gm, '<hr style="border:none;border-top:1px solid var(--border);margin:18px 0">');
+            // Tables (simple)
+            h = h.replace(/\|(.+)\|\n\|[-| :]+\|\n((?:\|.+\|\n?)+)/g, (_, hdr, rows) => {
+                const th = hdr.split('|').filter(s => s.trim()).map(s => `<th>${s.trim()}</th>`).join('');
+                const trs = rows.trim().split('\n').map(r => {
+                    const tds = r.split('|').filter(s => s.trim()).map(s => `<td>${s.trim()}</td>`).join('');
+                    return `<tr>${tds}</tr>`;
+                }).join('');
+                return `<table><thead><tr>${th}</tr></thead><tbody>${trs}</tbody></table>`;
+            });
+            // Lists
+            h = h.replace(/^(\d+)\. (.+)$/gm, '<li class="ol">$2</li>');
+            h = h.replace(/((?:<li class="ol">.*<\/li>\n?)+)/g, '<ol>$1</ol>');
+            h = h.replace(/<li class="ol">/g, '<li>');
+            h = h.replace(/^[-*+] (.+)$/gm, '<li>$1</li>');
+            h = h.replace(/((?:<li>(?!.*<\/ol>).*<\/li>\n?)+)/g, (m) => {
+                if (m.includes('<ol>')) return m;
+                return '<ul>' + m + '</ul>';
+            });
+            // Links
+            h = h.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+            // Paragraphs
+            const parts = h.split(/\n{2,}/);
+            h = parts.map(p => {
+                p = p.trim(); if (!p) return '';
+                if (/^<(h[1-6]|ul|ol|blockquote|div|table|hr|pre)/.test(p)) return p;
+                return `<p>${p.replace(/\n/g, '<br>')}</p>`;
+            }).join('\n');
+            return h;
+        }
+
+        function synHL(code, lang) {
+            if (!lang) return code;
+            const kw = {
+                js: /\b(const|let|var|function|return|if|else|for|while|class|import|export|from|async|await|new|this|typeof|true|false|null|undefined|switch|case|break|continue|try|catch|finally|throw|of|in)\b/g,
+                ts: /\b(const|let|var|function|return|if|else|for|while|class|import|export|from|async|await|type|interface|extends|implements|readonly|private|public|protected|enum|namespace|declare|abstract)\b/g,
+                python: /\b(def|return|if|else|elif|for|while|import|from|class|True|False|None|in|not|and|or|with|as|try|except|finally|lambda|yield|pass|break|continue|raise|global|nonlocal|del|assert)\b/g,
+                css: /\b(display|flex|grid|color|background|margin|padding|border|font|width|height|position|top|left|right|bottom|overflow|z-index|opacity|transform|transition|animation)\b/g,
+                html: /(&lt;\/?)([\w-]+)/g,
+                bash: /\b(echo|ls|cd|mkdir|rm|cp|mv|cat|grep|sed|awk|curl|wget|git|npm|pip|python|node|chmod|sudo|export|source)\b/g,
+            };
+            let c = code;
+            const k = kw[lang] || kw.js;
+            if (lang === 'html') {
+                c = c.replace(/(&lt;\/?)([\w-]+)/g, '<span class="tk">$1$2</span>');
+                c = c.replace(/([\w-]+=)(["'][^"']*["'])/g, '<span class="tv">$1</span><span class="ts">$2</span>');
+            } else {
+                c = c.replace(k, '<span class="tk">$1</span>');
+            }
+            c = c.replace(/(["'`])((?:[^"'`\\]|\\.)*?)\1/g, '<span class="ts">$1$2$1</span>');
+            c = c.replace(/\b(\d+\.?\d*)\b/g, '<span class="tn">$1</span>');
+            c = c.replace(/(\/\/[^\n]*|#\s[^\n]*|\/\*[\s\S]*?\*\/)/g, '<span class="tc">$1</span>');
+            c = c.replace(/\b([A-Z][a-zA-Z0-9]*)\b(?=\s*\()/g, '<span class="tf">$1</span>');
+            return c;
+        }
+
+        // ═══════════════════════ RESPONSES ═══════════════════════════════
+        const RESP = {
+            ai: () => `## AI Breakthroughs in 2025
+
+The AI landscape has seen transformative advances this year across reasoning, multimodality, and agentic systems.
+
+**Frontier Models**
+
+Major labs released models with dramatically improved reasoning and context lengths:
+
+\`\`\`python
+# Example: Calling a frontier API with structured output
+import anthropic
+
+client = anthropic.Anthropic()
+response = client.messages.create(
+    model="claude-opus-4-20250514",
+    max_tokens=4096,
+    system="You are an expert research assistant.",
+    messages=[
+        {"role": "user", "content": "Summarize the latest AI breakthroughs"}
+    ]
+)
+print(response.content[0].text)
+\`\`\`
+
+**Key Developments:**
+
+1. **Reasoning models** achieve near-human performance on math olympiad problems (AMC, AIME)
+2. **1M+ token context windows** enable entire codebase analysis in a single pass
+3. **Multimodal agents** can perceive and act across text, images, audio, and video
+4. **RLHF improvements** — Direct Preference Optimization (DPO) and Constitutional AI advance alignment
+
+**Impact by Domain:**
+
+| Domain | Productivity Gain | Key Use Case |
+|:---|:---|:---|
+| Software Engineering | 55–70% | Code review, generation |
+| Healthcare | 30–45% | Diagnostics, drug discovery |
+| Legal | 40–60% | Document analysis, research |
+| Education | 35–50% | Personalized tutoring |
+
+The transition from LLMs to **autonomous agent systems** is the defining shift — models now plan, execute, and iterate across multi-step tasks without human intervention.`,
+
+            quantum: () => `## How Quantum Computing Works
+
+Quantum computers exploit quantum mechanical phenomena — **superposition**, **entanglement**, and **interference** — to process information in ways classical computers cannot.
+
+**Classical vs Quantum Bits**
+
+| Feature | Classical Bit | Qubit |
+|:---|:---|:---|
+| State | 0 or 1 | \`α|0⟩ + β|1⟩\` |
+| Operations | Sequential | Massively parallel |
+| Error rate | ~10⁻¹⁵ | ~10⁻³ (current NISQ) |
+| Scaling | Moore's Law | Exponential potential |
+
+**The Math Behind Superposition**
+
+\`\`\`
+A qubit state: |ψ⟩ = α|0⟩ + β|1⟩
+
+Normalization constraint: |α|² + |β|² = 1
+
+Two-qubit entangled Bell state:
+|Φ⁺⟩ = (|00⟩ + |11⟩) / √2
+\`\`\`
+
+**Quantum Gates in Practice**
+
+\`\`\`python
+# Quantum circuit using Qiskit
+from qiskit import QuantumCircuit
+from qiskit.primitives import StatevectorSampler
+
+qc = QuantumCircuit(2, 2)
+qc.h(0)          # Hadamard: creates superposition
+qc.cx(0, 1)      # CNOT: creates entanglement
+qc.measure([0, 1], [0, 1])
+
+sampler = StatevectorSampler()
+result = sampler.run([qc], shots=1000).result()
+print(result[0].data.c.get_counts())
+# Output: {'00': ~500, '11': ~500} — perfect correlation
+\`\`\`
+
+**Current State (2025):** IBM has reached **1,386 qubit** processors. Google achieved quantum supremacy in 2019 and continues to advance error correction. **Fault-tolerant** quantum computing — needing ~1M physical qubits per logical qubit — remains 5–10 years away.`,
+
+            code: (q) => `## ${q}
+
+Here's a comprehensive implementation with best practices:
+
+\`\`\`javascript
+// Modern implementation with async/await and error handling
+class DataProcessor {
+  constructor(options = {}) {
+    this.cache = new Map();
+    this.timeout = options.timeout ?? 5000;
+    this.retries = options.retries ?? 3;
+  }
+
+  async process(input) {
+    const cacheKey = JSON.stringify(input);
+    
+    // Check cache first
+    if (this.cache.has(cacheKey)) {
+      console.log('Cache hit:', cacheKey);
+      return this.cache.get(cacheKey);
+    }
+
+    // Process with retry logic
+    for (let attempt = 0; attempt < this.retries; attempt++) {
+      try {
+        const result = await this.#transform(input);
+        this.cache.set(cacheKey, result);
+        return result;
+      } catch (error) {
+        if (attempt === this.retries - 1) throw error;
+        await new Promise(r => setTimeout(r, 2 ** attempt * 100));
+      }
+    }
+  }
+
+  async #transform(data) {
+    // Core transformation logic
+    return data.map(item => ({
+      ...item,
+      processed: true,
+      timestamp: Date.now()
+    }));
+  }
+}
+
+// Usage
+const processor = new DataProcessor({ timeout: 3000, retries: 2 });
+const result = await processor.process([{ id: 1, value: 'test' }]);
+\`\`\`
+
+**Performance Considerations:**
+
+- The \`Map\` cache gives **O(1)** lookup — prefer over object literals for dynamic keys
+- Exponential backoff prevents thundering herd on retry
+- Private class fields (\`#transform\`) enforce encapsulation
+- \`???\` operator correctly handles \`null\`/\`undefined\` defaults
+
+\`\`\`bash
+# Benchmark this implementation
+node --prof app.js
+node --prof-process isolate-*.log | grep -A 10 "Bottom up"
+\`\`\`
+
+The pattern above scales to production because it separates concerns cleanly — caching, retry logic, and transformation are all independently testable.`,
+
+            default: (q) => `## ${q}
+
+This is a multifaceted topic worth examining from several angles.
+
+**Overview**
+
+The subject touches on interconnected systems that researchers and practitioners have studied extensively. The evidence points toward a nuanced picture where **context matters enormously** in determining outcomes.
+
+Consider the core framework:
+
+\`\`\`python
+def analyze(topic: str, depth: int = 3) -> dict:
+    """
+    Multi-level analysis framework
+    Returns structured insights with citations
+    """
+    context = extract_context(topic)
+    
+    levels = {
+        "surface": quick_overview(context),
+        "analytical": deep_analysis(context, depth),
+        "synthesis": cross_reference(context)
+    }
+    
+    return {
+        "topic": topic,
+        "confidence": calculate_confidence(levels),
+        "insights": levels,
+        "sources": fetch_citations(context)
+    }
+\`\`\`
+
+**Key Dimensions:**
+
+1. **Historical context** — The field has evolved significantly over the past decade, with watershed moments shifting consensus multiple times
+2. **Current state** — Leading researchers broadly agree on the fundamentals, though edge cases remain contested
+3. **Practical implications** — Real-world applications demonstrate both the potential and current limitations clearly
+
+**What the Evidence Shows:**
+
+The strongest conclusion we can draw is that outcomes are **highly sensitive to initial conditions**. Small changes in setup can produce dramatically different results — a finding replicated across dozens of independent studies.
+
+> *"The goal is not to find the right answer, but to ask better questions."*
+
+For deeper exploration, the primary literature offers richer nuance than any summary can capture. Cross-referencing multiple perspectives remains the most reliable path to genuine understanding.`
+        };
+
+        function genResponse(q) {
+            const t = q.toLowerCase();
+            if (t.includes('ai') || t.includes('artificial intelligence') || t.includes('breakthrough') || t.includes('llm') || t.includes('model')) return RESP.ai();
+            if (t.includes('quantum')) return RESP.quantum();
+            if (t.includes('code') || t.includes('function') || t.includes('implement') || t.includes('javascript') || t.includes('python') || t.includes('program')) return RESP.code(q);
+            return RESP.default(q);
+        }
+
+        // ═══════════════════════ RELATED QUESTIONS ═══════════════════════
+        const RELATED_MAP = {
+            ai: ['What are the performance tradeoffs between different model sizes?', 'How do reasoning models like o1 differ from GPT-4?', 'Which industries will AI disrupt most in the next 5 years?', 'What is RLHF and how does it improve AI alignment?', 'Can you show a concrete agent workflow example?'],
+            quantum: ['How does quantum error correction work?', 'When will quantum computers break RSA encryption?', 'What is the difference between NISQ and fault-tolerant quantum?', 'How does quantum entanglement enable faster computation?', 'Which quantum programming languages should I learn?'],
+            code: ['Can you show a more detailed example with tests?', 'What are the performance tradeoffs of this approach?', 'How would this scale in production with 10k requests/second?', 'What are common pitfalls to avoid in this pattern?', 'How do I add TypeScript types to this code?'],
+            default: ['Can you go deeper on the most important aspect?', 'What are the main counterarguments to this view?', 'How does this compare to 5 years ago?', 'What would an expert practitioner say about this?', 'What are the practical next steps to learn more?'],
+        };
+
+        function genRelated(q) {
+            const t = q.toLowerCase();
+            let pool;
+            if (t.includes('ai') || t.includes('model') || t.includes('llm')) pool = RELATED_MAP.ai;
+            else if (t.includes('quantum')) pool = RELATED_MAP.quantum;
+            else if (t.includes('code') || t.includes('function') || t.includes('implement')) pool = RELATED_MAP.code;
+            else pool = RELATED_MAP.default;
+            return pool.slice(0, 4);
+        }
+
+        // ═══════════════════════ SOURCES ═════════════════════════════════
+        const SRC_POOL = [
+            { fav: '🔬', title: 'Nature — Peer-reviewed research and scientific findings', url: 'nature.com' },
+            { fav: '📰', title: 'MIT Technology Review — Emerging technology analysis', url: 'technologyreview.com' },
+            { fav: '🌐', title: 'Wikipedia — Comprehensive free encyclopedia', url: 'en.wikipedia.org' },
+            { fav: '📚', title: 'ArXiv — Preprint research papers', url: 'arxiv.org' },
+            { fav: '💡', title: 'Wired — Technology culture and science news', url: 'wired.com' },
+            { fav: '🏛️', title: 'Britannica — Trusted encyclopedia since 1768', url: 'britannica.com' },
+            { fav: '🔗', title: 'Stanford HAI — Human-centered AI research', url: 'hai.stanford.edu' },
+            { fav: '📊', title: 'Statista — Statistics and market research data', url: 'statista.com' },
+            { fav: '🎓', title: 'Google Scholar — Academic literature search', url: 'scholar.google.com' },
+            { fav: '🗞️', title: 'The Guardian — Independent quality journalism', url: 'theguardian.com' },
+        ];
+        function pickSources() {
+            return [...SRC_POOL].sort(() => Math.random() - .5).slice(0, 3 + Math.floor(Math.random() * 2));
+        }
+
+        // ═══════════════════════ KEYBOARD SHORTCUTS ══════════════════════
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') { closeLogin(); closeSettings(); closeModelDrop(); }
+            if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); (document.getElementById('chat-qi') || document.getElementById('home-qi')).focus(); }
+            if ((e.metaKey || e.ctrlKey) && e.key === '/') { e.preventDefault(); newChat(); }
+        });
+    </script>
+</body>
+
+</html>

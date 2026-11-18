@@ -1,0 +1,6 @@
+flask
+groq
+chromadb
+pdfplumber
+sentence-transformers
+python-dotenv

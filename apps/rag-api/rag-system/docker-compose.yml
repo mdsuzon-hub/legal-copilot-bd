@@ -1,0 +1,57 @@
+version: "3.9"
+
+services:
+  # ── FastAPI RAG Backend ──────────────────────────────────────────────
+  rag-backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: rag-backend
+    restart: unless-stopped
+    env_file: ./backend/.env
+    ports:
+      - "8000:8000"
+    volumes:
+      - chroma_data:/app/chroma_db
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - rag-net
+
+  # ── PHP + Apache Frontend ─────────────────────────────────────────────
+  rag-frontend:
+    image: php:8.2-apache
+    container_name: rag-frontend
+    restart: unless-stopped
+    environment:
+      RAG_API_BASE: http://rag-backend:8000
+    volumes:
+      - ./frontend/public:/var/www/html
+      - ./frontend/src:/var/www/rag-src
+    ports:
+      - "8080:80"
+    depends_on:
+      rag-backend:
+        condition: service_healthy
+    command: >
+      bash -c "
+        docker-php-ext-install curl &&
+        a2enmod rewrite headers deflate &&
+        echo 'ServerName localhost' >> /etc/apache2/apache2.conf &&
+        sed -i 's|/var/www/html|/var/www/html|g' /etc/apache2/sites-available/000-default.conf &&
+        php -r \"echo 'PHP OK\n';\" &&
+        apache2-foreground
+      "
+    networks:
+      - rag-net
+
+volumes:
+  chroma_data:
+
+networks:
+  rag-net:
+    driver: bridge

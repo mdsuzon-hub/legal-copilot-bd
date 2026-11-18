@@ -1,0 +1,1207 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DIU Assistant</title>
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%2320808D'/><path d='M8 8h16v2H8zm0 7h16v2H8zm0 7h10v2H8z' fill='white'/></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="../scorces/style.css">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
+</head>
+
+<body>
+
+  <!-- ═══════════════════════ SIDEBAR ════════════════════════════ -->
+  <div id="sidebar">
+    <div class="sb-head">
+      <div class="logo-wrap">
+        <div class="logo-icon"><svg viewBox="0 0 24 24">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+          </svg></div>
+        <div class="logo-txt">DIU Assistant</div>
+      </div>
+    </div>
+
+    <button class="sb-new" id="new-chat-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <line x1="12" y1="5" x2="12" y2="19" />
+        <line x1="5" y1="12" x2="19" y2="12" />
+      </svg>
+      New Thread
+    </button>
+
+    <div class="sb-scroll">
+      <div class="sb-sec">Today</div>
+      <div id="hist-today"></div>
+      <div class="sb-sec" id="hist-older-label" style="display:none">Earlier</div>
+      <div id="hist-older"></div>
+    </div>
+
+    <div class="sb-footer">
+      <button class="sb-fbtn" onclick="openSettings()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3" />
+          <path
+            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+        </svg>
+        Settings
+      </button>
+      <button class="u-btn" onclick="openLogin()">
+        <div class="u-av" id="u-av">G</div>
+        <div class="u-info">
+          <div class="u-name" id="u-name">Guest User</div>
+          <div class="u-plan" id="u-plan">Free · 5 queries/day</div>
+        </div>
+      </button>
+    </div>
+  </div>
+  <div class="mob-overlay" id="mob-overlay" onclick="closeSidebar()"></div>
+
+  <!-- ═══════════════════════ MAIN ════════════════════════════════ -->
+  <div id="main">
+
+    <!-- NAVBAR -->
+    <div id="navbar">
+      <button class="nb-toggle" onclick="toggleSidebar()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="6" x2="21" y2="6" />
+          <line x1="3" y1="12" x2="21" y2="12" />
+          <line x1="3" y1="18" x2="21" y2="18" />
+        </svg>
+      </button>
+      <div class="nb-title" id="nb-title">New Thread</div>
+      <div class="nb-actions">
+        <!-- MODEL SELECTOR -->
+        <div class="model-selector" id="model-selector" onclick="toggleModelDrop()">
+          <div class="model-dot" id="model-dot"></div>
+          <span class="model-name" id="model-name-display">Sonar Pro</span>
+          <svg class="model-arrow" id="model-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2.5">
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+          <div class="model-dropdown" id="model-dropdown">
+            <div class="md-header">Select Model</div>
+            <div class="md-item selected" data-model="sonar-pro" onclick="selectModel(this)">
+              <div class="md-icon" style="background:rgba(32,128,141,.15)">🔍</div>
+              <div class="md-info">
+                <div class="md-label">Sonar Pro</div>
+                <div class="md-desc">Best accuracy · Real-time web</div>
+              </div>
+              <span class="md-badge">Default</span>
+            </div>
+            <div class="md-item" data-model="sonar" onclick="selectModel(this)">
+              <div class="md-icon" style="background:rgba(32,128,141,.1)">⚡</div>
+              <div class="md-info">
+                <div class="md-label">Sonar</div>
+                <div class="md-desc">Fast · Everyday queries</div>
+              </div>
+            </div>
+            <div class="md-sep"></div>
+            <div class="md-header">Research</div>
+            <div class="md-item" data-model="deep-research" onclick="selectModel(this)">
+              <div class="md-icon" style="background:rgba(168,85,247,.15)">🧠</div>
+              <div class="md-info">
+                <div class="md-label">Deep Research</div>
+                <div class="md-desc">Multi-step · Long reports</div>
+              </div>
+              <span class="md-badge"
+                style="background:rgba(168,85,247,.15);color:#c084fc;border-color:rgba(168,85,247,.2)">Pro</span>
+            </div>
+            <div class="md-item" data-model="r1" onclick="selectModel(this)">
+              <div class="md-icon" style="background:rgba(245,158,11,.12)">💡</div>
+              <div class="md-info">
+                <div class="md-label">R1 Reasoning</div>
+                <div class="md-desc">Chain-of-thought · Complex logic</div>
+              </div>
+              <span class="md-badge"
+                style="background:rgba(245,158,11,.12);color:#fbbf24;border-color:rgba(245,158,11,.2)">Pro</span>
+            </div>
+            <div class="md-sep"></div>
+            <div class="md-header">Writing</div>
+            <div class="md-item" data-model="claude" onclick="selectModel(this)">
+              <div class="md-icon" style="background:rgba(232,121,56,.12)">✍️</div>
+              <div class="md-info">
+                <div class="md-label">Claude Sonnet</div>
+                <div class="md-desc">Creative writing · Nuanced answers</div>
+              </div>
+            </div>
+            <div class="md-item" data-model="gpt4o" onclick="selectModel(this)">
+              <div class="md-icon" style="background:rgba(16,185,129,.12)">🤖</div>
+              <div class="md-info">
+                <div class="md-label">GPT-4o</div>
+                <div class="md-desc">Multimodal · Broad knowledge</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <button class="nb-btn" id="share-btn" style="display:none" onclick="shareThread()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="18" cy="5" r="3" />
+            <circle cx="6" cy="12" r="3" />
+            <circle cx="18" cy="19" r="3" />
+            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+          </svg>
+          Share
+        </button>
+        <button class="nb-icon" title="Sign in" onclick="openLogin()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+            <circle cx="12" cy="7" r="4" />
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- CHAT AREA -->
+    <div id="chat-area">
+
+      <!-- HOME SCREEN -->
+      <div id="home">
+        <div class="home-hero">
+          <div class="home-icon"><svg viewBox="0 0 24 24">
+              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+            </svg></div>
+          <div class="home-title">DIU <em>Smart</em> Assistant</div>
+          <div class="home-sub">Ask anything about Daffodil International University — notices, policies, and more.
+          </div>
+        </div>
+
+        <div class="home-input">
+          <div class="input-box" id="home-input-box">
+            <div class="ib-top">
+              <textarea class="qi" id="home-qi" placeholder="Ask about DIU notices, admissions, results..."
+                rows="1"></textarea>
+            </div>
+            <div class="ib-bot">
+              <button class="ib-act" id="home-rag-btn" onclick="toggleMode('rag', this)"
+                title="Search indexed documents">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                  <polyline points="14 2 14 8 20 8" />
+                  <line x1="16" y1="13" x2="8" y2="13" />
+                  <line x1="16" y1="17" x2="8" y2="17" />
+                </svg>
+                RAG
+              </button>
+              <button class="ib-act" id="home-web-btn" onclick="toggleMode('web', this)" title="Search the web">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="2" y1="12" x2="22" y2="12" />
+                  <path
+                    d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                </svg>
+                Web
+              </button>
+              <div id="home-file-indicator" style="display:none" class="file-indicator">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                  <polyline points="14 2 14 8 20 8" />
+                </svg>
+                <span id="home-file-name">No file</span>
+                <button class="fi-remove" onclick="clearFile('home')" title="Remove file">✕</button>
+              </div>
+              <div class="ib-spacer"></div>
+              <button class="send-btn" id="home-send" onclick="handleHomeSend()">
+                <svg viewBox="0 0 24 24">
+                  <path d="M22 2L11 13M22 2L15 22 11 13 2 9l20-7z" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="chips">
+          <button class="chip" onclick="setQ('Latest notices from DIU notice board')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 8h1a4 4 0 0 1 0 8h-1" />
+              <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z" />
+              <line x1="6" y1="1" x2="6" y2="4" />
+              <line x1="10" y1="1" x2="10" y2="4" />
+              <line x1="14" y1="1" x2="14" y2="4" />
+            </svg>
+            DIU Notices
+          </button>
+          <button class="chip" onclick="setQ('What are the admission requirements for DIU?')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+              <path d="M6 12v5c3 3 9 3 12 0v-5" />
+            </svg>
+            Admission Info
+          </button>
+          <button class="chip" onclick="setQ('DIU exam schedule and results')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" />
+              <line x1="16" y1="2" x2="16" y2="6" />
+              <line x1="8" y1="2" x2="8" y2="6" />
+              <line x1="3" y1="10" x2="21" y2="10" />
+            </svg>
+            Exam Schedule
+          </button>
+          <button class="chip" onclick="setQ('DIU tuition fees and payment methods')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="1" x2="12" y2="23" />
+              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+            </svg>
+            Fee Structure
+          </button>
+          <button class="chip" onclick="setQ('DIU faculty and department information')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+            </svg>
+            Faculty Info
+          </button>
+          <button class="chip" onclick="setQ('DIU campus facilities and student services')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+              <polyline points="9 22 9 12 15 12 15 22" />
+            </svg>
+            Campus Life
+          </button>
+        </div>
+      </div>
+
+      <!-- CHAT VIEW -->
+      <div id="chat-view" style="display:none">
+        <div class="chat-wrap" id="chat-wrap"></div>
+      </div>
+
+    </div><!-- end chat-area -->
+
+    <!-- BOTTOM BAR -->
+    <div id="bottom-bar" style="display:none">
+      <div class="input-box" id="chat-input-box">
+        <div id="chat-file-indicator" style="display:none" class="file-indicator" style="margin:0 14px 0">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+          </svg>
+          <span id="chat-file-name">No file</span>
+          <button class="fi-remove" onclick="clearFile('chat')" title="Remove">✕</button>
+        </div>
+        <div class="ib-top">
+          <textarea class="qi" id="chat-qi" placeholder="Ask a follow-up..." rows="1"></textarea>
+        </div>
+        <div class="ib-bot">
+          <button class="ib-act" id="chat-rag-btn" onclick="toggleMode('rag', this)" title="Search indexed documents">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+              <line x1="16" y1="13" x2="8" y2="13" />
+              <line x1="16" y1="17" x2="8" y2="17" />
+            </svg>
+            RAG
+          </button>
+          <button class="ib-act" id="chat-web-btn" onclick="toggleMode('web', this)" title="Search the web">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="2" y1="12" x2="22" y2="12" />
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+            </svg>
+            Web
+          </button>
+          <div class="ib-spacer"></div>
+          <span style="font-size:10.5px;color:var(--text4);margin-right:4px" id="char-count"></span>
+          <button class="send-btn" id="chat-send" onclick="handleChatSend()">
+            <svg viewBox="0 0 24 24">
+              <path d="M22 2L11 13M22 2L15 22 11 13 2 9l20-7z" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end main -->
+
+  <!-- ═══════════════════════ LOGIN MODAL ════════════════════════ -->
+  <div class="overlay" id="login-modal" onclick="if(event.target===this)closeLogin()">
+    <div class="modal">
+      <button class="modal-x" onclick="closeLogin()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15">
+          <line x1="18" y1="6" x2="6" y2="18" />
+          <line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
+      </button>
+      <div class="modal-logo">
+        <div class="logo-icon"><svg viewBox="0 0 24 24" style="width:13px;height:13px;fill:white">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+          </svg></div>
+        <div class="logo-txt">DIU Assistant</div>
+      </div>
+      <div class="modal-h">Welcome back</div>
+      <p class="modal-p">Sign in to sync your threads, unlock unlimited queries, and access Pro models.</p>
+      <button class="g-btn" onclick="loginGoogle()">
+        <svg viewBox="0 0 24 24" width="17" height="17">
+          <path
+            d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+            fill="#4285F4" />
+          <path
+            d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+            fill="#34A853" />
+          <path
+            d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+            fill="#FBBC05" />
+          <path
+            d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+            fill="#EA4335" />
+        </svg>
+        Continue with Google
+      </button>
+      <div class="divider"><span>or continue with email</span></div>
+      <input class="m-input" type="email" placeholder="Email address" id="m-email" autocomplete="email">
+      <input class="m-input" type="password" placeholder="Password" id="m-pass" autocomplete="current-password">
+      <button class="m-btn" onclick="loginEmail()">Sign in</button>
+      <div class="m-foot">
+        New? <a onclick="loginEmail()">Create a free account</a><br><br>
+        <a href="#">Terms of Service</a> · <a href="#">Privacy Policy</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════ SETTINGS ═══════════════════════════ -->
+  <div id="settings" onclick="if(event.target===this)closeSettings()">
+    <div class="settings-sheet">
+      <div class="sh"></div>
+      <div class="s-title">Settings</div>
+
+      <div class="s-grp">
+        <div class="s-grp-lbl">Appearance</div>
+        <div class="s-row">
+          <div class="s-row-info">
+            <div class="s-row-lbl">Dark mode</div>
+            <div class="s-row-desc">Always use dark theme</div>
+          </div>
+          <div class="tog on" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <div class="s-row">
+          <div class="s-row-info">
+            <div class="s-row-lbl">Compact density</div>
+            <div class="s-row-desc">Reduce spacing between messages</div>
+          </div>
+          <div class="tog" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <div class="s-row">
+          <div class="s-row-info">
+            <div class="s-row-lbl">Font size</div>
+            <div class="s-row-desc">Adjust response text size</div>
+          </div>
+          <select class="s-sel" onchange="changeFontSize(this.value)">
+            <option value="sm">Small</option>
+            <option value="md" selected>Medium</option>
+            <option value="lg">Large</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="s-grp">
+        <div class="s-grp-lbl">AI & Search</div>
+        <div class="s-row">
+          <div class="s-row-info">
+            <div class="s-row-lbl">Streaming responses</div>
+            <div class="s-row-desc">Show text word by word as generated</div>
+          </div>
+          <div class="tog on" id="stream-tog" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <div class="s-row">
+          <div class="s-row-info">
+            <div class="s-row-lbl">Show sources</div>
+            <div class="s-row-desc">Display reference cards below answers</div>
+          </div>
+          <div class="tog on" id="src-tog" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <div class="s-row">
+          <div class="s-row-info">
+            <div class="s-row-lbl">Related questions</div>
+            <div class="s-row-desc">Show follow-up suggestions after answers</div>
+          </div>
+          <div class="tog on" id="related-tog" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <div class="s-row">
+          <div class="s-row-info">
+            <div class="s-row-lbl">Auto-detect notices</div>
+            <div class="s-row-desc">Automatically pull DIU notices for relevant queries</div>
+          </div>
+          <div class="tog on" id="notice-tog" onclick="this.classList.toggle('on')"></div>
+        </div>
+      </div>
+
+      <div class="s-grp">
+        <div class="s-grp-lbl">Privacy & Data</div>
+        <div class="s-row">
+          <div class="s-row-info">
+            <div class="s-row-lbl">Save history</div>
+            <div class="s-row-desc">Store threads in localStorage</div>
+          </div>
+          <div class="tog on" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <div class="s-row">
+          <div class="s-row-info">
+            <div class="s-row-lbl">Analytics</div>
+            <div class="s-row-desc">Share anonymous usage data</div>
+          </div>
+          <div class="tog" onclick="this.classList.toggle('on')"></div>
+        </div>
+      </div>
+
+      <div class="s-grp">
+        <div class="s-grp-lbl">Account</div>
+        <div class="s-row">
+          <div class="s-row-info">
+            <div class="s-row-lbl">Clear all history</div>
+            <div class="s-row-desc">Permanently delete all saved threads</div>
+          </div>
+          <button class="danger-btn" onclick="clearHistory()">Clear all</button>
+        </div>
+        <div class="s-row">
+          <div class="s-row-info">
+            <div class="s-row-lbl">Export data</div>
+            <div class="s-row-desc">Download all your conversations as JSON</div>
+          </div>
+          <button class="danger-btn" style="border-color:var(--accent);color:var(--accent)"
+            onclick="exportData()">Export</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+  <input type="file" id="file-input" style="display:none" accept=".pdf,.txt,.md">
+
+  <script>
+    // ══════════════════════════════════════════════════════════════════════
+    //  STATE
+    // ══════════════════════════════════════════════════════════════════════
+    const API_BASE = 'api.php';
+
+    let state = {
+      chats: JSON.parse(localStorage.getItem('diu_chats') || '[]'),
+      current: null,
+      streaming: false,
+      abortController: null,
+      model: { id: 'sonar-pro', name: 'Sonar Pro', dot: '#20808d' },
+      mode: 'general',   // 'general' | 'rag' | 'web'
+      loggedIn: false,
+      user: { name: 'Guest User', initial: 'G', plan: 'Free · 5 queries/day' },
+      pendingFile: null,  // { name, base64, type }
+    };
+
+    const MODELS = {
+      'sonar-pro': { name: 'Sonar Pro', dot: '#20808d' },
+      'sonar': { name: 'Sonar', dot: '#20808d' },
+      'deep-research': { name: 'Deep Research', dot: '#a855f7' },
+      'r1': { name: 'R1 Reasoning', dot: '#f59e0b' },
+      'claude': { name: 'Claude Sonnet', dot: '#e87838' },
+      'gpt4o': { name: 'GPT-4o', dot: '#22c55e' },
+    };
+
+    // ══════════════════════════════════════════════════════════════════════
+    //  INIT
+    // ══════════════════════════════════════════════════════════════════════
+    document.addEventListener('DOMContentLoaded', () => {
+      setupTA('home-qi', handleHomeSend);
+      setupTA('chat-qi', handleChatSend);
+      renderHistory();
+      if (window.innerWidth <= 768) closeSidebarMob();
+      window.addEventListener('resize', () => { if (window.innerWidth <= 768) closeSidebarMob(); });
+      document.getElementById('chat-qi').addEventListener('input', updateCharCount);
+      document.addEventListener('click', e => {
+        if (!document.getElementById('model-selector').contains(e.target)) closeModelDrop();
+      });
+      // Init model dot
+      document.getElementById('model-dot').style.background = state.model.dot;
+      document.getElementById('model-dot').style.boxShadow = `0 0 6px ${state.model.dot}80`;
+    });
+
+    function setupTA(id, onEnter) {
+      const ta = document.getElementById(id);
+      if (!ta) return;
+      ta.addEventListener('input', () => growTA(ta));
+      ta.addEventListener('keydown', e => {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onEnter(); }
+      });
+    }
+    function growTA(ta) {
+      ta.style.height = 'auto';
+      ta.style.height = Math.min(ta.scrollHeight, 200) + 'px';
+    }
+    function updateCharCount() {
+      const n = document.getElementById('chat-qi').value.length;
+      document.getElementById('char-count').textContent = n > 100 ? n : '';
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    //  SIDEBAR
+    // ══════════════════════════════════════════════════════════════════════
+    function toggleSidebar() {
+      if (window.innerWidth <= 768) {
+        document.getElementById('sidebar').classList.toggle('mob-open');
+        document.getElementById('mob-overlay').classList.toggle('show');
+      } else {
+        document.getElementById('sidebar').classList.toggle('collapsed');
+      }
+    }
+    function closeSidebar() {
+      document.getElementById('sidebar').classList.remove('mob-open');
+      document.getElementById('mob-overlay').classList.remove('show');
+    }
+    function closeSidebarMob() { document.getElementById('sidebar').classList.add('collapsed'); }
+
+    // ══════════════════════════════════════════════════════════════════════
+    //  MODE TOGGLE (RAG / Web)
+    // ══════════════════════════════════════════════════════════════════════
+    function toggleMode(mode, btn) {
+      // Find all mode buttons in the same input box
+      const box = btn.closest('.ib-bot');
+      const ragBtn = box.querySelector('[id$="rag-btn"]');
+      const webBtn = box.querySelector('[id$="web-btn"]');
+
+      if (state.mode === mode) {
+        // Deactivate → go back to general
+        state.mode = 'general';
+        ragBtn && ragBtn.classList.remove('active');
+        webBtn && webBtn.classList.remove('active');
+        // Sync the other input box too
+        syncModeBtns();
+        toast('Mode: General conversation');
+      } else {
+        state.mode = mode;
+        ragBtn && ragBtn.classList.toggle('active', mode === 'rag');
+        webBtn && webBtn.classList.toggle('active', mode === 'web');
+        syncModeBtns();
+        toast(mode === 'rag' ? '📚 RAG: Searching indexed documents' : '🌐 Web: Searching the web');
+      }
+    }
+
+    function syncModeBtns() {
+      ['home-rag-btn', 'chat-rag-btn'].forEach(id => {
+        const b = document.getElementById(id);
+        if (b) b.classList.toggle('active', state.mode === 'rag');
+      });
+      ['home-web-btn', 'chat-web-btn'].forEach(id => {
+        const b = document.getElementById(id);
+        if (b) b.classList.toggle('active', state.mode === 'web');
+      });
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    //  FILE HANDLING
+    // ══════════════════════════════════════════════════════════════════════
+    function clearFile(ctx) {
+      state.pendingFile = null;
+      document.getElementById(`${ctx}-file-indicator`).style.display = 'none';
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    //  HISTORY
+    // ══════════════════════════════════════════════════════════════════════
+    function renderHistory() {
+      const today = state.chats.filter(c => isToday(c.ts));
+      const older = state.chats.filter(c => !isToday(c.ts));
+      document.getElementById('hist-today').innerHTML = today.map(histHTML).join('');
+      document.getElementById('hist-older').innerHTML = older.map(histHTML).join('');
+      document.getElementById('hist-older-label').style.display = older.length ? '' : 'none';
+    }
+    function histHTML(c) {
+      const active = state.current?.id === c.id ? 'active' : '';
+      const modeIcon = c.mode === 'rag' ? '📚' : c.mode === 'web' ? '🌐' : '💬';
+      return `<div class="hi ${active}" onclick="loadChat('${c.id}')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    <span title="${esc(c.title)}">${modeIcon} ${esc(c.title)}</span>
+    <button class="hd" onclick="delChat('${c.id}',event)" title="Delete">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="12" height="12"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+    </button>
+  </div>`;
+    }
+    function isToday(ts) { return new Date(ts).toDateString() === new Date().toDateString(); }
+    function delChat(id, e) {
+      e.stopPropagation();
+      state.chats = state.chats.filter(c => c.id !== id);
+      save();
+      if (state.current?.id === id) newChat();
+      else renderHistory();
+    }
+    function clearHistory() {
+      if (!confirm('Delete all chat history? This cannot be undone.')) return;
+      state.chats = []; save(); newChat(); closeSettings(); toast('History cleared');
+    }
+    function exportData() {
+      const blob = new Blob([JSON.stringify(state.chats, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'diu-chat-export.json'; a.click();
+      toast('Data exported');
+    }
+    function save() { localStorage.setItem('diu_chats', JSON.stringify(state.chats)); renderHistory(); }
+
+    // ══════════════════════════════════════════════════════════════════════
+    //  CHAT MANAGEMENT
+    // ══════════════════════════════════════════════════════════════════════
+    function newChat() {
+      if (state.streaming) stopStream();
+      state.current = null;
+      document.getElementById('home').style.display = '';
+      document.getElementById('chat-view').style.display = 'none';
+      document.getElementById('bottom-bar').style.display = 'none';
+      document.getElementById('share-btn').style.display = 'none';
+      document.getElementById('nb-title').textContent = 'New Thread';
+      const hq = document.getElementById('home-qi');
+      hq.value = ''; growTA(hq);
+      renderHistory(); closeSidebar();
+    }
+    document.getElementById('new-chat-btn').addEventListener('click', newChat);
+
+    function loadChat(id) {
+      const chat = state.chats.find(c => c.id === id);
+      if (!chat) return;
+      if (state.streaming) stopStream();
+      state.current = chat;
+      showChatUI();
+      const wrap = document.getElementById('chat-wrap');
+      wrap.innerHTML = '';
+      chat.messages.forEach(m => {
+        if (m.role === 'user') wrap.appendChild(mkUserBubble(m.content));
+        else wrap.appendChild(mkAiBubble(m));
+      });
+      document.getElementById('nb-title').textContent = chat.title;
+      renderHistory(); scrollBot(); closeSidebar();
+      setTimeout(() => document.getElementById('chat-qi').focus(), 100);
+    }
+
+    function showChatUI() {
+      document.getElementById('home').style.display = 'none';
+      document.getElementById('chat-view').style.display = 'block';
+      document.getElementById('bottom-bar').style.display = 'block';
+      document.getElementById('share-btn').style.display = 'flex';
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    //  SEND
+    // ══════════════════════════════════════════════════════════════════════
+    function handleHomeSend() {
+      const ta = document.getElementById('home-qi');
+      const text = ta.value.trim();
+      if (!text || state.streaming) return;
+      ta.value = ''; growTA(ta);
+      beginChat(text);
+    }
+    function handleChatSend() {
+      if (state.streaming) { stopStream(); return; }
+      const ta = document.getElementById('chat-qi');
+      const text = ta.value.trim();
+      if (!text) return;
+      ta.value = ''; growTA(ta); updateCharCount();
+      addTurn(text);
+    }
+    function setQ(text) {
+      document.getElementById('home-qi').value = text;
+      growTA(document.getElementById('home-qi'));
+      document.getElementById('home-qi').focus();
+    }
+
+    async function beginChat(text) {
+      state.current = {
+        id: Date.now().toString(),
+        title: text.slice(0, 52) + (text.length > 52 ? '…' : ''),
+        ts: Date.now(),
+        mode: state.mode,
+        messages: []
+      };
+      state.chats.unshift(state.current);
+      save(); showChatUI();
+      addTurn(text);
+    }
+
+    async function addTurn(text) {
+      if (state.streaming) return;
+      state.streaming = true;
+      updateSendBtns(true);
+
+      const wrap = document.getElementById('chat-wrap');
+      state.current.messages.push({ role: 'user', content: text });
+      wrap.appendChild(mkUserBubble(text));
+      scrollBot();
+
+      // Typing indicator
+      const aiGroup = document.createElement('div');
+      aiGroup.className = 'msg-group';
+      const modeLabel = state.mode === 'rag' ? 'Searching documents…' :
+        state.mode === 'web' ? 'Searching the web…' :
+          'Thinking…';
+      aiGroup.innerHTML = `<div class="ai-msg">
+    <div class="ai-head">
+      <div class="ai-av"><svg viewBox="0 0 24 24" style="width:13px;height:13px;fill:white"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
+      DIU Assistant
+      <span class="model-tag">${esc(state.model.name)}</span>
+    </div>
+    <div class="typing-wrap"><div class="dots"><span></span><span></span><span></span></div><span>${modeLabel}</span></div>
+  </div>`;
+      wrap.appendChild(aiGroup);
+      scrollBot();
+
+      try {
+        // Build history for context (last 8 turns)
+        const history = state.current.messages
+          .slice(-16, -1)
+          .map(m => ({ role: m.role, content: m.content }));
+
+        // Prepare form data
+        const formData = new FormData();
+        formData.append('question', text);
+        formData.append('mode', state.mode);
+        formData.append('model', state.model.id);
+        formData.append('history', JSON.stringify(history));
+        if (state.pendingFile) {
+          formData.append('file_name', state.pendingFile.name);
+          formData.append('file_data', state.pendingFile.base64);
+          formData.append('file_type', state.pendingFile.type);
+        }
+
+        state.abortController = new AbortController();
+
+        const response = await fetch(API_BASE, {
+          method: 'POST',
+          body: formData,
+          signal: state.abortController.signal
+        });
+
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const data = await response.json();
+
+        if (data.error) throw new Error(data.error);
+
+        // Replace typing with actual answer
+        const msgDiv = aiGroup.querySelector('.ai-msg');
+        msgDiv.innerHTML = buildAiMsgHTML(data);
+
+        // Wire up related question clicks
+        msgDiv.querySelectorAll('.rq').forEach(el => {
+          el.addEventListener('click', () => {
+            const q = el.getAttribute('data-q');
+            document.getElementById('chat-qi').value = q;
+            growTA(document.getElementById('chat-qi'));
+            handleChatSend();
+          });
+        });
+
+        applyCodeHandlers(msgDiv);
+
+        // Save to history
+        state.current.messages.push({
+          role: 'assistant',
+          content: data.answer,
+          sources: data.sources || [],
+          related: data.related || [],
+          notices: data.notices || [],
+          mode: data.mode || state.mode,
+          model: state.model.name
+        });
+        state.current.ts = Date.now();
+        save();
+        document.getElementById('nb-title').textContent = state.current.title;
+
+        // Clear pending file
+        state.pendingFile = null;
+        document.getElementById('home-file-indicator').style.display = 'none';
+        document.getElementById('chat-file-indicator').style.display = 'none';
+
+      } catch (err) {
+        if (err.name === 'AbortError') {
+          aiGroup.querySelector('.ai-msg').innerHTML = `
+        <div class="ai-head">
+          <div class="ai-av"><svg viewBox="0 0 24 24" style="width:13px;height:13px;fill:white"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
+          DIU Assistant
+        </div>
+        <div class="ai-body" style="color:var(--text3)"><em>Response stopped.</em></div>`;
+        } else {
+          console.error('API error:', err);
+          aiGroup.querySelector('.ai-msg').innerHTML = `
+        <div class="ai-head">
+          <div class="ai-av"><svg viewBox="0 0 24 24" style="width:13px;height:13px;fill:white"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
+          DIU Assistant
+        </div>
+        <div class="ai-body"><span style="color:#ef4444">⚠ Error: ${esc(err.message)}</span><br><span style="color:var(--text3);font-size:13px">Make sure the PHP backend (api.php) is running and your API key is configured.</span></div>`;
+        }
+      }
+
+      state.streaming = false;
+      state.abortController = null;
+      updateSendBtns(false);
+      scrollBot();
+      setTimeout(() => document.getElementById('chat-qi')?.focus(), 80);
+    }
+
+    function stopStream() {
+      if (state.abortController) state.abortController.abort();
+      state.streaming = false;
+      updateSendBtns(false);
+    }
+
+    function updateSendBtns(streaming) {
+      ['home-send', 'chat-send'].forEach(id => {
+        const btn = document.getElementById(id); if (!btn) return;
+        if (id === 'chat-send') {
+          btn.classList.toggle('stop-mode', streaming);
+          btn.innerHTML = streaming
+            ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>`
+            : `<svg viewBox="0 0 24 24"><path d="M22 2L11 13M22 2L15 22 11 13 2 9l20-7z"/></svg>`;
+        }
+        btn.disabled = id === 'home-send' ? streaming : false;
+      });
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    //  HTML BUILDERS
+    // ══════════════════════════════════════════════════════════════════════
+    function buildAiMsgHTML(data) {
+      const mode = data.mode || 'general';
+      const modeBadge = mode === 'web' ? `<span class="mode-badge web">🌐 Web Search</span>` :
+        mode === 'rag' ? `<span class="mode-badge rag">📚 Document RAG</span>` :
+          mode === 'notice' ? `<span class="mode-badge notice">📋 DIU Notices</span>` :
+            `<span class="mode-badge general">💬 General</span>`;
+
+      const showSources = document.getElementById('src-tog').classList.contains('on');
+      const showRelated = document.getElementById('related-tog').classList.contains('on');
+
+      return `
+    <div class="ai-head">
+      <div class="ai-av"><svg viewBox="0 0 24 24" style="width:13px;height:13px;fill:white"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
+      DIU Assistant
+      <span class="model-tag">${esc(data.model_name || state.model.name)}</span>
+    </div>
+    ${modeBadge}
+    ${showSources && data.notices && data.notices.length ? mkNoticeCardsHTML(data.notices) : ''}
+    ${showSources && data.sources && data.sources.length ? mkSourcesHTML(data.sources) : ''}
+    <div class="ai-body">${md2html(data.answer || '')}</div>
+    ${mkActionsHTML(data.answer || '')}
+    ${showRelated && data.related && data.related.length ? mkRelatedHTML(data.related) : ''}
+  `;
+    }
+
+    function mkUserBubble(text) {
+      const d = document.createElement('div');
+      d.className = 'msg-group';
+      d.innerHTML = `<div class="u-msg"><div class="u-bubble">${esc(text)}</div></div>`;
+      return d;
+    }
+
+    function mkAiBubble(msg) {
+      const d = document.createElement('div');
+      d.className = 'msg-group';
+      d.innerHTML = `<div class="ai-msg">${buildAiMsgHTML({
+        answer: msg.content,
+        sources: msg.sources || [],
+        related: msg.related || [],
+        notices: msg.notices || [],
+        mode: msg.mode || 'general',
+        model_name: msg.model || 'Sonar Pro'
+      })}</div>`;
+      d.querySelectorAll('.rq').forEach(el => {
+        el.addEventListener('click', () => {
+          const q = el.getAttribute('data-q');
+          document.getElementById('chat-qi').value = q;
+          growTA(document.getElementById('chat-qi'));
+          handleChatSend();
+        });
+      });
+      applyCodeHandlers(d);
+      return d;
+    }
+
+    function mkSourcesHTML(sources) {
+      if (!sources || !sources.length) return '';
+      return `<div class="src-grid">${sources.map((s, i) => `
+    <div class="src-card" title="${esc(s.url || '')}" onclick="window.open('${esc(s.url || '#')}','_blank')">
+      <div style="display:flex;align-items:center;gap:6px">
+        <div class="src-num">${i + 1}</div>
+        <span class="src-fav">${s.favicon || '🔗'}</span>
+      </div>
+      <div class="src-title">${esc(s.title || s.url || 'Source')}</div>
+      <div class="src-url">${esc(s.url || '')}</div>
+    </div>`).join('')}</div>`;
+    }
+
+    function mkNoticeCardsHTML(notices) {
+      if (!notices || !notices.length) return '';
+      return `<div class="notice-cards">${notices.map(n => `
+    <div class="notice-card" onclick="${n.url ? `window.open('${esc(n.url)}','_blank')` : ''}">
+      <div class="notice-card-title">${esc(n.title || 'Notice')}</div>
+      <div class="notice-card-meta">
+        ${n.date ? `<span>📅 ${esc(n.date)}</span>` : ''}
+        ${n.category ? `<span>🏷 ${esc(n.category)}</span>` : ''}
+        ${n.url ? `<span>🔗 View Notice</span>` : ''}
+      </div>
+    </div>`).join('')}</div>`;
+    }
+
+    function mkRelatedHTML(related) {
+      if (!related || !related.length) return '';
+      const items = related.map(q => `
+    <div class="rq" data-q="${esc(q)}">
+      <div class="rq-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+      <div class="rq-text">${esc(q)}</div>
+      <svg class="rq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>`).join('');
+      return `<div class="related-wrap">
+    <div class="related-head" onclick="toggleRelated(this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      Related
+      <svg class="related-toggle open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+    <div class="related-list">${items}</div>
+  </div>`;
+    }
+
+    function toggleRelated(head) {
+      const tog = head.querySelector('.related-toggle');
+      const list = head.nextElementSibling;
+      const open = tog.classList.contains('open');
+      tog.classList.toggle('open', !open);
+      list.style.display = open ? 'none' : '';
+    }
+
+    function mkActionsHTML(content) {
+      return `<div class="ai-acts">
+    <button class="ai-act" onclick="copyAct(this,\`${esc2(content)}\`)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy
+    </button>
+    <button class="ai-act" onclick="regenAct(this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>Retry
+    </button>
+    <button class="ai-act" onclick="thumbAct(this,'up')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
+    </button>
+    <button class="ai-act" onclick="thumbAct(this,'down')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z"/><path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg>
+    </button>
+    <button class="ai-act" onclick="shareAct()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>Share
+    </button>
+  </div>`;
+    }
+
+    function applyCodeHandlers(root) {
+      root.querySelectorAll('.cb-btn[data-action="copy"]').forEach(btn => {
+        btn.onclick = () => copyCode(btn);
+      });
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    //  ACTIONS
+    // ══════════════════════════════════════════════════════════════════════
+    function copyAct(btn, text) {
+      navigator.clipboard.writeText(text).then(() => {
+        const orig = btn.innerHTML;
+        btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><polyline points="20 6 9 17 4 12"/></svg>Copied!`;
+        btn.classList.add('active');
+        setTimeout(() => { btn.innerHTML = orig; btn.classList.remove('active'); }, 2000);
+      });
+    }
+    function regenAct() {
+      const last = state.current?.messages.filter(m => m.role === 'user').slice(-1)[0];
+      if (last && !state.streaming) {
+        const groups = document.querySelectorAll('#chat-wrap .msg-group');
+        if (groups.length >= 2) groups[groups.length - 1].remove();
+        state.current.messages = state.current.messages.slice(0, -1);
+        addTurn(last.content);
+      }
+    }
+    function thumbAct(btn, dir) {
+      btn.classList.toggle('active');
+      toast(dir === 'up' ? '👍 Positive feedback recorded' : '👎 Feedback noted — we\'ll improve');
+    }
+    function shareAct() { shareThread(); }
+    function copyCode(btn) {
+      const code = btn.closest('.code-block').querySelector('pre code').textContent;
+      navigator.clipboard.writeText(code).then(() => {
+        const orig = btn.innerHTML;
+        btn.classList.add('copied');
+        btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Copied!`;
+        setTimeout(() => { btn.classList.remove('copied'); btn.innerHTML = orig; }, 2000);
+      });
+    }
+    function shareThread() {
+      navigator.clipboard.writeText(window.location.href).then(() => toast('Thread link copied'));
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    //  MODEL SELECTOR
+    // ══════════════════════════════════════════════════════════════════════
+    function toggleModelDrop() {
+      const dd = document.getElementById('model-dropdown');
+      const sel = document.getElementById('model-selector');
+      const open = dd.classList.contains('open');
+      dd.classList.toggle('open', !open);
+      sel.classList.toggle('open', !open);
+      document.getElementById('model-arrow').style.color = open ? '' : 'var(--accent)';
+    }
+    function closeModelDrop() {
+      document.getElementById('model-dropdown').classList.remove('open');
+      document.getElementById('model-selector').classList.remove('open');
+      document.getElementById('model-arrow').style.color = '';
+    }
+    function selectModel(el) {
+      document.querySelectorAll('.md-item').forEach(i => i.classList.remove('selected'));
+      el.classList.add('selected');
+      const id = el.getAttribute('data-model');
+      const m = MODELS[id];
+      state.model = { id, name: m.name, dot: m.dot };
+      document.getElementById('model-name-display').textContent = m.name;
+      document.getElementById('model-dot').style.background = m.dot;
+      document.getElementById('model-dot').style.boxShadow = `0 0 6px ${m.dot}80`;
+      closeModelDrop();
+      toast(`Model: ${m.name}`);
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    //  SETTINGS
+    // ══════════════════════════════════════════════════════════════════════
+    function changeFontSize(v) {
+      const sz = { sm: '13.5px', md: '14.5px', lg: '16px' };
+      document.querySelectorAll('.ai-body').forEach(el => el.style.fontSize = sz[v]);
+    }
+    function openSettings() { document.getElementById('settings').classList.add('open'); }
+    function closeSettings() { document.getElementById('settings').classList.remove('open'); }
+
+    // ══════════════════════════════════════════════════════════════════════
+    //  LOGIN
+    // ══════════════════════════════════════════════════════════════════════
+    function openLogin() { document.getElementById('login-modal').classList.add('open'); }
+    function closeLogin() { document.getElementById('login-modal').classList.remove('open'); }
+    function loginGoogle() {
+      state.loggedIn = true;
+      state.user = { name: 'DIU Student', initial: 'DS', plan: 'Pro · Unlimited' };
+      applyUser(); closeLogin(); toast('Signed in as DIU Student');
+    }
+    function loginEmail() {
+      const em = document.getElementById('m-email').value || 'user@diu.edu.bd';
+      const name = em.split('@')[0];
+      state.loggedIn = true;
+      state.user = { name, initial: name[0].toUpperCase(), plan: 'Free · 10 queries/day' };
+      applyUser(); closeLogin(); toast('Signed in as ' + name);
+    }
+    function applyUser() {
+      document.getElementById('u-av').textContent = state.user.initial;
+      document.getElementById('u-name').textContent = state.user.name;
+      document.getElementById('u-plan').textContent = state.user.plan;
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    //  UTILITY
+    // ══════════════════════════════════════════════════════════════════════
+    function esc(s) {
+      return String(s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+    function esc2(s) { return String(s).replace(/`/g, '\\`').replace(/\$/g, '\\$'); }
+    function scrollBot() {
+      const a = document.getElementById('chat-area');
+      a.scrollTo({ top: a.scrollHeight, behavior: 'smooth' });
+    }
+    function toast(msg, d = 2600) {
+      const t = document.getElementById('toast');
+      t.textContent = msg; t.classList.add('show');
+      clearTimeout(t._to);
+      t._to = setTimeout(() => t.classList.remove('show'), d);
+    }
+    function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+    // ══════════════════════════════════════════════════════════════════════
+    //  MARKDOWN → HTML
+    // ══════════════════════════════════════════════════════════════════════
+    function md2html(md) {
+      let h = String(md || '');
+      // Code blocks
+      h = h.replace(/```(\w*)\n?([\s\S]*?)```/g, (_, lang, code) => {
+        const lines = code.trim().split('\n');
+        const numbered = lines.map((l, i) => `<span class="ln">${i + 1}</span>${synHL(esc(l), lang)}`).join('\n');
+        return `<div class="code-block">
+      <div class="cb-head">
+        <span class="cb-lang">${lang || 'code'}</span>
+        <div class="cb-actions">
+          <button class="cb-btn" data-action="copy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy</button>
+        </div>
+      </div>
+      <pre><code>${numbered}</code></pre>
+    </div>`;
+      });
+      h = h.replace(/`([^`\n]+)`/g, '<code>$1</code>');
+      h = h.replace(/\*\*\*(.+?)\*\*\*/gs, '<strong><em>$1</em></strong>');
+      h = h.replace(/\*\*(.+?)\*\*/gs, '<strong>$1</strong>');
+      h = h.replace(/\*([^*\n]+)\*/g, '<em>$1</em>');
+      h = h.replace(/^#### (.+)$/gm, '<h4>$1</h4>');
+      h = h.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+      h = h.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+      h = h.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+      h = h.replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>');
+      h = h.replace(/^---$/gm, '<hr style="border:none;border-top:1px solid var(--border);margin:18px 0">');
+      // Tables
+      h = h.replace(/\|(.+)\|\n\|[-| :]+\|\n((?:\|.+\|\n?)+)/g, (_, hdr, rows) => {
+        const th = hdr.split('|').filter(s => s.trim()).map(s => `<th>${s.trim()}</th>`).join('');
+        const trs = rows.trim().split('\n').map(r => {
+          const tds = r.split('|').filter(s => s.trim()).map(s => `<td>${s.trim()}</td>`).join('');
+          return `<tr>${tds}</tr>`;
+        }).join('');
+        return `<table><thead><tr>${th}</tr></thead><tbody>${trs}</tbody></table>`;
+      });
+      h = h.replace(/^(\d+)\. (.+)$/gm, '<li class="ol">$2</li>');
+      h = h.replace(/((?:<li class="ol">.*<\/li>\n?)+)/g, '<ol>$1</ol>');
+      h = h.replace(/<li class="ol">/g, '<li>');
+      h = h.replace(/^[-*+] (.+)$/gm, '<li>$1</li>');
+      h = h.replace(/((?:<li>(?!.*<\/ol>).*<\/li>\n?)+)/g, m => {
+        if (m.includes('<ol>')) return m;
+        return '<ul>' + m + '</ul>';
+      });
+      h = h.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+      const parts = h.split(/\n{2,}/);
+      h = parts.map(p => {
+        p = p.trim(); if (!p) return '';
+        if (/^<(h[1-6]|ul|ol|blockquote|div|table|hr|pre)/.test(p)) return p;
+        return `<p>${p.replace(/\n/g, '<br>')}</p>`;
+      }).join('\n');
+      return h;
+    }
+
+    function synHL(code, lang) {
+      if (!lang) return code;
+      const kw = {
+        js: /\b(const|let|var|function|return|if|else|for|while|class|import|export|from|async|await|new|this|typeof|true|false|null|undefined|switch|case|break|continue|try|catch|finally|throw|of|in)\b/g,
+        ts: /\b(const|let|var|function|return|if|else|for|while|class|import|export|from|async|await|type|interface|extends|implements|readonly|private|public|protected|enum)\b/g,
+        python: /\b(def|return|if|else|elif|for|while|import|from|class|True|False|None|in|not|and|or|with|as|try|except|finally|lambda|yield|pass|break|continue|raise)\b/g,
+        php: /\b(function|return|if|else|elseif|for|while|foreach|class|new|echo|print|true|false|null|array|public|private|protected|static|try|catch|finally|throw|namespace|use)\b/g,
+        bash: /\b(echo|ls|cd|mkdir|rm|cp|mv|cat|grep|sed|awk|curl|wget|git|npm|pip|python|node|chmod|sudo|export|source)\b/g,
+      };
+      let c = code;
+      const k = kw[lang] || kw.js;
+      c = c.replace(k, '<span class="tk">$1</span>');
+      c = c.replace(/(["'`])((?:[^"'`\\]|\\.)*?)\1/g, '<span class="ts">$1$2$1</span>');
+      c = c.replace(/\b(\d+\.?\d*)\b/g, '<span class="tn">$1</span>');
+      c = c.replace(/(\/\/[^\n]*|#\s[^\n]*|\/\*[\s\S]*?\*\/)/g, '<span class="tc">$1</span>');
+      return c;
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    //  KEYBOARD SHORTCUTS
+    // ══════════════════════════════════════════════════════════════════════
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') { closeLogin(); closeSettings(); closeModelDrop(); }
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        (document.getElementById('chat-qi') || document.getElementById('home-qi')).focus();
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key === '/') { e.preventDefault(); newChat(); }
+    });
+  </script>
+</body>
+
+</html>
