@@ -30,14 +30,6 @@ wheels/
 .installed.cfg
 *.egg
 
-# Virtual environments
-venv/
-.venv/
-env/
-ENV/
-env.bak/
-venv.bak/
-
 # Testing & coverage
 .pytest_cache/
 .coverage
