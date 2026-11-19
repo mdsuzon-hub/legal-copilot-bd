@@ -126,6 +126,23 @@ def _try_concatenated_json(content: str):
     return _normalize(records), "concatenated-json"
 
 
+def _try_jsonl_stream(path: str):
+    """Line-by-line streaming parser for large JSONL files."""
+    records: List[dict] = []
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            for line in f:
+                ln = line.strip()
+                if not ln:
+                    continue
+                records.append(json.loads(ln))
+    except Exception:
+        return None
+    if not records:
+        return None
+    return _normalize(records), "jsonl"
+
+
 def load_records(path: str, forced_format: str = "auto") -> Tuple[List[dict], str]:
     """
     Load records from a file. Supported shapes:
@@ -135,6 +152,12 @@ def load_records(path: str, forced_format: str = "auto") -> Tuple[List[dict], st
       - jsonl             : one object per line
       - concatenated-json : {...}\n{...}\n{...}   (no commas / no array)
     """
+    if forced_format == "jsonl" or (forced_format == "auto" and path.endswith(".jsonl")):
+        # Try fast streaming JSONL first for efficiency
+        streamed = _try_jsonl_stream(path)
+        if streamed is not None:
+            return streamed
+
     with open(path, "r", encoding="utf-8") as f:
         content = f.read().strip()
 
@@ -262,6 +285,7 @@ def report(
     fmt: str,
     file_path: str,
     export_csv: bool = False,
+    out_dir: str = None,
 ) -> None:
     total = len(records)
     all_fields = set()
@@ -384,9 +408,80 @@ def report(
             for f, t in inconsistent:
                 print(f"  - {f:<40} {dict(t)}")
 
+    # ---------------- Legal Domain & Language Analysis ----------------
+    if total and any("act_name" in r for r in records if isinstance(r, dict)):
+        print_header("LEGAL DOMAIN & LANGUAGE ANALYSIS")
+        acts = set()
+        repealed_acts = set()
+        active_acts = set()
+        act_section_cnt = Counter()
+        bangla_cnt = 0
+        english_cnt = 0
+        mixed_cnt = 0
+        empty_txt_cnt = 0
+        volumes = set()
+
+        for r in records:
+            if not isinstance(r, dict):
+                continue
+            act = r.get("act_name")
+            if act:
+                acts.add(act)
+                act_section_cnt[act] += 1
+                if r.get("repealed", False):
+                    repealed_acts.add(act)
+                else:
+                    active_acts.add(act)
+            vol = r.get("volume_name")
+            if vol:
+                volumes.add(vol)
+
+            txt = r.get("section_text", "")
+            if not txt or not isinstance(txt, str):
+                empty_txt_cnt += 1
+                continue
+            letters = [ch for ch in txt if ch.isalpha() or "\u0980" <= ch <= "\u09ff"]
+            if not letters:
+                empty_txt_cnt += 1
+                continue
+            bn = sum(1 for ch in letters if "\u0980" <= ch <= "\u09ff")
+            ratio = bn / len(letters)
+            if ratio > 0.6:
+                bangla_cnt += 1
+            elif ratio < 0.2:
+                english_cnt += 1
+            else:
+                mixed_cnt += 1
+
+        rep_sec = sum(1 for r in records if isinstance(r, dict) and r.get("repealed", False))
+        act_sec = total - rep_sec
+
+        print(f"Total Sections / Records : {total}")
+        print(f"Total Unique Acts        : {len(acts)}")
+        print(f"Active Acts              : {len(active_acts)} ({(len(active_acts)/len(acts)*100 if acts else 0):.2f}%)")
+        print(f"Repealed Acts            : {len(repealed_acts)} ({(len(repealed_acts)/len(acts)*100 if acts else 0):.2f}%)")
+        print(f"Active Sections          : {act_sec} ({(act_sec/total*100):.2f}%)")
+        print(f"Repealed Sections        : {rep_sec} ({(rep_sec/total*100):.2f}%)")
+        print(f"Total Volumes Represented: {len(volumes)}")
+        print("\nLanguage Distribution (section_text):")
+        print(f"  - Bangla               : {bangla_cnt:>6} ({bangla_cnt/total*100:5.2f}%)")
+        print(f"  - English              : {english_cnt:>6} ({english_cnt/total*100:5.2f}%)")
+        print(f"  - Mixed / Bilingual    : {mixed_cnt:>6} ({mixed_cnt/total*100:5.2f}%)")
+        print(f"  - Empty / No text      : {empty_txt_cnt:>6} ({empty_txt_cnt/total*100:5.2f}%)")
+
+        if act_section_cnt:
+            print("\nTop 5 Acts by Section Count:")
+            for act, cnt in act_section_cnt.most_common(5):
+                print(f"  - {act[:55]:<55} : {cnt} sections")
+
     # ---------------- CSV export ----------------
     if export_csv:
-        out = os.path.splitext(file_path)[0] + "_profile.csv"
+        if out_dir:
+            os.makedirs(out_dir, exist_ok=True)
+            base_name = os.path.splitext(os.path.basename(file_path))[0] + "_profile.csv"
+            out = os.path.join(out_dir, base_name)
+        else:
+            out = os.path.splitext(file_path)[0] + "_profile.csv"
         with open(out, "w", newline="", encoding="utf-8") as fh:
             writer = csv.writer(fh)
             writer.writerow([
@@ -423,6 +518,10 @@ def main() -> None:
         help="Export per-field profile to CSV"
     )
     parser.add_argument(
+        "--out-dir", default=None,
+        help="Optional directory to save exported CSV (default: same as input file)"
+    )
+    parser.add_argument(
         "--format",
         choices=["auto", "json", "jsonl", "concatenated"],
         default="auto",
@@ -441,7 +540,7 @@ def main() -> None:
         print(f"[!] No records found in {args.file}")
         return
 
-    report(records, fmt, args.file, export_csv=args.csv)
+    report(records, fmt, args.file, export_csv=args.csv, out_dir=args.out_dir)
 
 
 if __name__ == "__main__":
