@@ -3,7 +3,7 @@
 .env.*
 !.env.example
 
-# Raw data
+# Raw data "https://huggingface.co/datasets/Ashik2380/bdlaws"
 data/raw/bdlaws.jsonl
 
 # Python bytecode & cache
