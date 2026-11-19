@@ -48,6 +48,8 @@ htmlcov/
 *.log
 uploads/
 **/rag_cache/*.json
+*.db
+*.sqlite3
 
 # IDE & OS metadata
 .vscode/

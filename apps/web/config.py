@@ -44,6 +44,15 @@ DIU_NOTICE_URL = os.environ.get('DIU_NOTICE_URL', 'https://noticeboard.diu.edu.b
 CACHE_DIR = Path(os.environ.get('CACHE_DIR', str(BASE_DIR / 'live' / 'rag_cache')))
 NOTICE_CACHE_TTL = int(os.environ.get('NOTICE_CACHE_TTL', '600'))  # 10 minutes
 
+# Google OAuth 2.0 Credentials
+GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID', '').strip()
+GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET', '').strip()
+SECRET_KEY = os.environ.get('SECRET_KEY', 'legal-copilot-bd-session-secret-2026').strip()
+GOOGLE_REDIRECT_URI = os.environ.get('GOOGLE_REDIRECT_URI', '').strip()
+
+# User SQLite Database
+USER_DB_PATH = Path(os.environ.get('USER_DB_PATH', str(BASE_DIR / 'users.db')))
+
 # Model display names
 MODEL_NAMES = {
     'openai/gpt-oss-120b': 'GPT-OSS 120B',

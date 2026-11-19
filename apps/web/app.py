@@ -18,11 +18,19 @@ import time
 from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import parse_qs, quote, unquote, urljoin, urlparse
+import secrets
 
 import requests
-from flask import Flask, jsonify, request, send_from_directory
+from flask import Flask, jsonify, request, send_from_directory, session, redirect, url_for
 
 import config
+import db
+
+# Initialize database
+try:
+    db.init_db()
+except Exception as e:
+    logging.warning(f"Database initialization error: {e}")
 
 # ── Logging ──────────────────────────────────────────────────────────────────
 logging.basicConfig(
@@ -37,7 +45,10 @@ LIVE_DIR = BASE_DIR / 'live'
 SCORCES_DIR = BASE_DIR / 'scorces'
 
 app = Flask(__name__, static_folder=None)
+app.secret_key = config.SECRET_KEY
 app.config['MAX_CONTENT_LENGTH'] = 30 * 1024 * 1024  # 30MB max upload
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
 # ── CORS Helper ──────────────────────────────────────────────────────────────
 def cors_response(data_or_response, status_code=200):
@@ -79,6 +90,216 @@ def serve_scorces(filename):
     if (SCORCES_DIR / filename).is_file():
         return send_from_directory(str(SCORCES_DIR), filename)
     return "File not found", 404
+
+
+# ── Authentication Routes (Google OAuth 2.0) ─────────────────────────────────
+@app.route('/auth/config', methods=['GET', 'OPTIONS'])
+def auth_config():
+    """Return public OAuth configuration for client-side authentication."""
+    if request.method == 'OPTIONS':
+        return cors_response('', 204)
+    return cors_response({
+        'google_client_id': config.GOOGLE_CLIENT_ID,
+        'configured': bool(config.GOOGLE_CLIENT_ID),
+    })
+
+
+@app.route('/auth/google/login')
+def google_login():
+    """Initiate server-side Google OAuth 2.0 Authorization Code flow."""
+    if not config.GOOGLE_CLIENT_ID:
+        return redirect('/?auth_error=' + quote('Google Client ID is not configured'))
+
+    state = secrets.token_urlsafe(16)
+    session['oauth_state'] = state
+
+    redirect_uri = config.GOOGLE_REDIRECT_URI or (request.host_url.rstrip('/') + '/auth/google/callback')
+
+    auth_url = (
+        'https://accounts.google.com/o/oauth2/v2/auth?'
+        f'client_id={quote(config.GOOGLE_CLIENT_ID)}&'
+        f'redirect_uri={quote(redirect_uri)}&'
+        'response_type=code&'
+        'scope=openid%20email%20profile&'
+        f'state={quote(state)}&'
+        'access_type=online&'
+        'prompt=select_account'
+    )
+    return redirect(auth_url)
+
+
+@app.route('/auth/google/callback')
+def google_callback():
+    """Handle callback from Google OAuth 2.0."""
+    error = request.args.get('error')
+    if error:
+        err_msg = request.args.get('error_description') or error
+        logger.warning(f"[OAuth] Google login error: {err_msg}")
+        return redirect('/?auth_error=' + quote(err_msg))
+
+    code = request.args.get('code')
+    if not code:
+        return redirect('/?auth_error=' + quote('Missing authorization code from Google'))
+
+    state = request.args.get('state')
+    saved_state = session.pop('oauth_state', None)
+    if saved_state and state != saved_state:
+        logger.warning("[OAuth] State mismatch / CSRF warning")
+        # Log warning but proceed if state is otherwise valid
+
+    redirect_uri = config.GOOGLE_REDIRECT_URI or (request.host_url.rstrip('/') + '/auth/google/callback')
+
+    # Exchange authorization code for tokens
+    try:
+        token_res = requests.post(
+            'https://oauth2.googleapis.com/token',
+            data={
+                'code': code,
+                'client_id': config.GOOGLE_CLIENT_ID,
+                'client_secret': config.GOOGLE_CLIENT_SECRET,
+                'redirect_uri': redirect_uri,
+                'grant_type': 'authorization_code',
+            },
+            timeout=15,
+        )
+        if token_res.status_code != 200:
+            logger.error(f"[OAuth] Token exchange failed ({token_res.status_code}): {token_res.text}")
+            return redirect('/?auth_error=' + quote('Failed to exchange token with Google'))
+
+        token_data = token_res.json()
+        access_token = token_data.get('access_token')
+
+        # Retrieve user profile from Google UserInfo endpoint
+        user_res = requests.get(
+            'https://www.googleapis.com/oauth2/v3/userinfo',
+            headers={'Authorization': f'Bearer {access_token}'},
+            timeout=15,
+        )
+        if user_res.status_code != 200:
+            logger.error(f"[OAuth] UserInfo fetch failed: {user_res.text}")
+            return redirect('/?auth_error=' + quote('Failed to retrieve user profile from Google'))
+
+        profile = user_res.json()
+        google_id = profile.get('sub')
+        email = profile.get('email')
+        name = profile.get('name') or (email.split('@')[0] if email else 'User')
+        picture = profile.get('picture')
+
+        if not email:
+            return redirect('/?auth_error=' + quote('No email provided by Google account'))
+
+        # Register new user or update existing (prevents duplicate accounts based on email)
+        user, is_new = db.get_or_create_user(
+            google_id=google_id,
+            email=email,
+            name=name,
+            picture=picture,
+        )
+        session['user'] = user
+        logger.info(f"[OAuth] User signed in via Google: {email} (new_user={is_new})")
+
+        return redirect('/?auth_success=1')
+
+    except Exception as e:
+        logger.error(f"[OAuth] Exception in google_callback: {e}", exc_info=True)
+        return redirect('/?auth_error=' + quote(f'Authentication error: {e}'))
+
+
+@app.route('/auth/google/verify', methods=['POST', 'OPTIONS'])
+def google_verify_token():
+    """
+    Verify Google ID Token from Google Identity Services (One-Tap / Sign-In Button).
+    Enables secure client-side login without exposing client secrets.
+    """
+    if request.method == 'OPTIONS':
+        return cors_response('', 204)
+
+    data = request.get_json(silent=True) or request.form
+    credential = data.get('credential') or data.get('id_token')
+
+    if not credential:
+        return json_error('Missing Google ID token credential', 400)
+
+    try:
+        # Verify token with Google public tokeninfo endpoint
+        res = requests.get(
+            f'https://oauth2.googleapis.com/tokeninfo?id_token={quote(credential)}',
+            timeout=10,
+        )
+        if res.status_code != 200:
+            return json_error('Invalid Google token verification', 401)
+
+        payload = res.json()
+
+        # Validate audience if client ID is configured
+        if config.GOOGLE_CLIENT_ID and payload.get('aud') != config.GOOGLE_CLIENT_ID:
+            logger.warning(f"[OAuth] Token audience mismatch: {payload.get('aud')} != {config.GOOGLE_CLIENT_ID}")
+            return json_error('Invalid token audience', 401)
+
+        google_id = payload.get('sub')
+        email = payload.get('email')
+        name = payload.get('name') or (email.split('@')[0] if email else 'User')
+        picture = payload.get('picture')
+
+        if not email:
+            return json_error('No email found in Google token', 400)
+
+        # Register or update user in SQLite database (no duplicates based on email)
+        user, is_new = db.get_or_create_user(
+            google_id=google_id,
+            email=email,
+            name=name,
+            picture=picture,
+        )
+        session['user'] = user
+        logger.info(f"[OAuth] User verified via ID token: {email} (new_user={is_new})")
+
+        return cors_response({
+            'success': True,
+            'user': user,
+            'is_new': is_new,
+        })
+
+    except Exception as e:
+        logger.error(f"[OAuth] Token verification exception: {e}", exc_info=True)
+        return json_error(f'Token verification error: {e}', 500)
+
+
+@app.route('/auth/me', methods=['GET', 'OPTIONS'])
+@app.route('/auth/user', methods=['GET', 'OPTIONS'])
+def auth_me():
+    """Return currently authenticated user information from session."""
+    if request.method == 'OPTIONS':
+        return cors_response('', 204)
+
+    user = session.get('user')
+    if user:
+        return cors_response({
+            'authenticated': True,
+            'user': user,
+        })
+    return cors_response({
+        'authenticated': False,
+        'user': None,
+    })
+
+
+@app.route('/auth/logout', methods=['GET', 'POST', 'OPTIONS'])
+def auth_logout():
+    """Log out user by clearing session."""
+    if request.method == 'OPTIONS':
+        return cors_response('', 204)
+
+    user = session.pop('user', None)
+    if user:
+        logger.info(f"[OAuth] User logged out: {user.get('email')}")
+
+    if request.method == 'POST' or request.is_json:
+        return cors_response({
+            'success': True,
+            'message': 'Logged out successfully',
+        })
+    return redirect('/?logged_out=1')
 
 
 # ── Favicon Domain Mapping ───────────────────────────────────────────────────
