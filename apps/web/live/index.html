@@ -8,7 +8,7 @@
   <link rel="icon"
     href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%2320808D'/><path d='M8 8h16v2H8zm0 7h16v2H8zm0 7h10v2H8z' fill='white'/></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="stylesheet" href="../scorces/style.css">
+  <link rel="stylesheet" href="scorces/style.css">
   <link
     href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
     rel="stylesheet">
@@ -480,7 +480,7 @@
     // ══════════════════════════════════════════════════════════════════════
     //  STATE
     // ══════════════════════════════════════════════════════════════════════
-    const API_BASE = 'api.php';
+    const API_BASE = 'api';
 
     let state = {
       chats: JSON.parse(localStorage.getItem('diu_chats') || '[]'),
@@ -829,7 +829,7 @@
           <div class="ai-av"><svg viewBox="0 0 24 24" style="width:13px;height:13px;fill:white"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
           DIU Assistant
         </div>
-        <div class="ai-body"><span style="color:#ef4444">⚠ Error: ${esc(err.message)}</span><br><span style="color:var(--text3);font-size:13px">Make sure the PHP backend (api.php) is running and your API key is configured.</span></div>`;
+        <div class="ai-body"><span style="color:#ef4444">⚠ Error: ${esc(err.message)}</span><br><span style="color:var(--text3);font-size:13px">Make sure the Flask backend is running and your API key is configured.</span></div>`;
         }
       }
 

@@ -1,8 +1,59 @@
 # Environment variables and secrets
-
 .env
 .env.*
 !.env.example
 
-# Raw data "https://huggingface.co/datasets/Ashik2380/bdlaws"
+# Raw data
 data/raw/bdlaws.jsonl
+
+# Python bytecode & cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Distribution / packaging
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Testing & coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Logs & runtime caches
+*.log
+uploads/
+**/rag_cache/*.json
+
+# IDE & OS metadata
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
