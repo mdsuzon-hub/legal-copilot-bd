@@ -273,7 +273,7 @@ def ask():
 
         cited = {int(n) for n in re.findall(r"\[S(\d+)\]", answer)}
         sources = [{
-            "id": i, "tag": f"S{i}", "source": c["source"], "page": c["page"],
+            "id": i, "tag": f"S{i}", "source": c["source"], "page": c.get("page"),
             "score": round(c["score"], 4), "cited": (i in cited) if cited else True,
             "snippet": c["text"][:300],
         } for i, c in enumerate(chunks, 1)]
