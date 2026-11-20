@@ -1234,6 +1234,20 @@ textarea.qi::placeholder {
     color: var(--green)
 }
 
+.ai-act.speaking {
+    color: var(--accent);
+    background: var(--accent-soft2);
+}
+
+.ai-act.speaking svg {
+    animation: speakerPulse 1.2s infinite ease-in-out;
+}
+
+@keyframes speakerPulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.18); opacity: 0.65; }
+}
+
 /* Typing */
 .typing-wrap {
     display: flex;
@@ -1724,6 +1738,38 @@ textarea.qi::placeholder {
 .s-row-desc {
     font-size: 11px;
     color: var(--text4)
+}
+
+.voice-picker {
+    display: flex;
+    background: var(--bg4);
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    padding: 2px;
+    gap: 2px;
+}
+
+.voice-btn {
+    border: none;
+    background: transparent;
+    color: var(--text3);
+    padding: 4px 10px;
+    font-size: 11.5px;
+    font-weight: 500;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: var(--t) var(--ease);
+    font-family: var(--font);
+}
+
+.voice-btn:hover {
+    color: var(--text);
+}
+
+.voice-btn.active {
+    background: var(--accent);
+    color: #fff;
+    font-weight: 600;
 }
 
 .tog {

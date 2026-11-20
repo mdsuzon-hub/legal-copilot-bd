@@ -426,6 +426,16 @@
           </div>
           <div class="tog on" id="notice-tog" onclick="this.classList.toggle('on')"></div>
         </div>
+        <div class="s-row">
+          <div class="s-row-info">
+            <div class="s-row-lbl">Voice narrator</div>
+            <div class="s-row-desc">Preferred voice for Read Aloud</div>
+          </div>
+          <div class="voice-picker">
+            <button class="voice-btn active" id="voice-male-btn" onclick="setVoiceGender('male')">Male</button>
+            <button class="voice-btn" id="voice-female-btn" onclick="setVoiceGender('female')">Female</button>
+          </div>
+        </div>
       </div>
 
       <div class="s-grp">
@@ -486,7 +496,24 @@
       loggedIn: false,
       user: { name: 'Guest User', initial: 'G', plan: 'Free · 5 queries/day' },
       pendingFile: null,  // { name, base64, type }
+      voiceGender: localStorage.getItem('legal_voice_gender') || 'male',
     };
+
+    function setVoiceGender(gender) {
+      state.voiceGender = gender;
+      localStorage.setItem('legal_voice_gender', gender);
+      updateVoiceButtons();
+      toast(`Voice narrator set to ${gender === 'male' ? 'Male' : 'Female'}`);
+    }
+
+    function updateVoiceButtons() {
+      const maleBtn = document.getElementById('voice-male-btn');
+      const femaleBtn = document.getElementById('voice-female-btn');
+      if (maleBtn && femaleBtn) {
+        maleBtn.classList.toggle('active', (state.voiceGender || 'male') === 'male');
+        femaleBtn.classList.toggle('active', state.voiceGender === 'female');
+      }
+    }
 
     const MODELS = {
       'sonar-pro': { name: 'Sonar Pro', dot: '#20808d' },
@@ -513,6 +540,7 @@
       // Init model dot
       document.getElementById('model-dot').style.background = state.model.dot;
       document.getElementById('model-dot').style.boxShadow = `0 0 6px ${state.model.dot}80`;
+      updateVoiceButtons();
     });
 
     function setupTA(id, onEnter) {
@@ -965,8 +993,11 @@
 
     function mkActionsHTML(content) {
       return `<div class="ai-acts">
-    <button class="ai-act" onclick="copyAct(this,\`${esc2(content)}\`)">
+    <button class="ai-act" onclick="copyAct(this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy
+    </button>
+    <button class="ai-act" onclick="speakAct(this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>Read
     </button>
     <button class="ai-act" onclick="regenAct(this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>Retry
@@ -992,12 +1023,254 @@
     // ══════════════════════════════════════════════════════════════════════
     //  ACTIONS
     // ══════════════════════════════════════════════════════════════════════
-    function copyAct(btn, text) {
+    let activeSpeakBtn = null;
+    let ttsQueue = [];
+    let ttsIndex = 0;
+    let currentAudioPlayer = null;
+    let ttsAbortController = null;
+    window._activeTTSUtterance = null;
+
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.onvoiceschanged = () => {
+        window.speechSynthesis.getVoices();
+      };
+    }
+
+    function getAiMsgText(btn) {
+      const aiMsg = btn.closest('.ai-msg');
+      if (!aiMsg) return '';
+      const body = aiMsg.querySelector('.ai-body');
+      return body ? (body.innerText || body.textContent || '').trim() : '';
+    }
+
+    function stripMarkdownForTTS(text) {
+      if (!text) return '';
+      return text
+        .replace(/```[\s\S]*?```/g, '')             // remove code blocks
+        .replace(/`([^`]+)`/g, '$1')                // inline code
+        .replace(/\[\^?\d+\]/g, '')                 // citation references like [1]
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')     // markdown links
+        .replace(/^#{1,6}\s+/gm, '')                // headers
+        .replace(/[*_~`>#-]/g, ' ')                 // markup formatting
+        .replace(/\s+/g, ' ')                       // normalize whitespace
+        .trim();
+    }
+
+    function resetSpeakBtn(btn) {
+      if (!btn) return;
+      btn.classList.remove('speaking');
+      btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>Read`;
+      if (activeSpeakBtn === btn) activeSpeakBtn = null;
+    }
+
+    function stopTTS() {
+      if (ttsAbortController) {
+        try { ttsAbortController.abort(); } catch (e) {}
+        ttsAbortController = null;
+      }
+      if (currentAudioPlayer) {
+        currentAudioPlayer.pause();
+        currentAudioPlayer.currentTime = 0;
+        currentAudioPlayer = null;
+      }
+      ttsQueue = [];
+      ttsIndex = 0;
+      window._activeTTSUtterance = null;
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+      if (activeSpeakBtn) {
+        resetSpeakBtn(activeSpeakBtn);
+      }
+    }
+
+    function playBrowserTTS(text, btn) {
+      if (!('speechSynthesis' in window)) {
+        resetSpeakBtn(btn);
+        toast('Speech synthesis is not supported in this browser.');
+        return;
+      }
+
+      const chunks = splitTextForTTS(text);
+      if (!chunks.length) {
+        resetSpeakBtn(btn);
+        return;
+      }
+
+      ttsQueue = chunks;
+      ttsIndex = 0;
+
+      window.speechSynthesis.cancel();
+      if (window.speechSynthesis.paused) {
+        window.speechSynthesis.resume();
+      }
+      playNextBrowserTTSChunk(btn);
+    }
+
+    function splitTextForTTS(text) {
+      if (!text) return [];
+      // Split by Bengali dori (।), period, question mark, exclamation, or newline
+      const rawSentences = text.match(/[^।?!.\n\r]+[।?!.\n\r]+|[^।?!.\n\r]+$/g) || [text];
+      const chunks = [];
+      rawSentences.forEach(s => {
+        const trimmed = s.trim();
+        if (!trimmed) return;
+        // If a single sentence is very long, split further by commas/semicolons
+        if (trimmed.length > 180) {
+          const sub = trimmed.match(/[^,;:]+[,;:]+|[^,;:]+$/g) || [trimmed];
+          sub.forEach(p => {
+            const pt = p.trim();
+            if (pt) chunks.push(pt);
+          });
+        } else {
+          chunks.push(trimmed);
+        }
+      });
+      return chunks;
+    }
+
+    function playNextBrowserTTSChunk(btn) {
+      if (!('speechSynthesis' in window) || ttsIndex >= ttsQueue.length || activeSpeakBtn !== btn) {
+        stopTTS();
+        return;
+      }
+
+      const chunk = ttsQueue[ttsIndex++];
+      if (!chunk || !chunk.trim()) {
+        playNextBrowserTTSChunk(btn);
+        return;
+      }
+
+      const utterance = new SpeechSynthesisUtterance(chunk);
+      window._activeTTSUtterance = utterance; // Prevent GC in Chromium
+
+      const isBangla = /[\u0980-\u09FF]/.test(chunk);
+      utterance.lang = isBangla ? 'bn-BD' : 'en-US';
+      utterance.rate = 1.0;
+
+      const preferMale = (state.voiceGender || 'male') === 'male';
+      utterance.pitch = preferMale ? 0.9 : 1.15;
+
+      const voices = window.speechSynthesis.getVoices();
+      if (voices && voices.length) {
+        const prefix = isBangla ? 'bn' : 'en';
+        const langVoices = voices.filter(v => v.lang && v.lang.toLowerCase().startsWith(prefix));
+        if (langVoices.length) {
+          const maleKeywords = ['male', 'david', 'guy', 'george', 'pradeep', 'mark', 'james', 'bashkar', 'stefan', 'oliver', 'deep'];
+          const femaleKeywords = ['female', 'zira', 'jenny', 'samantha', 'victoria', 'nabanita', 'karen', 'catherine', 'hazel', 'susan', 'mary'];
+
+          let matched = null;
+          if (preferMale) {
+            matched = langVoices.find(v => maleKeywords.some(kw => v.name.toLowerCase().includes(kw)))
+                   || langVoices.find(v => !femaleKeywords.some(kw => v.name.toLowerCase().includes(kw)))
+                   || langVoices[0];
+          } else {
+            matched = langVoices.find(v => femaleKeywords.some(kw => v.name.toLowerCase().includes(kw)))
+                   || langVoices.find(v => !maleKeywords.some(kw => v.name.toLowerCase().includes(kw)))
+                   || langVoices[0];
+          }
+          if (matched) utterance.voice = matched;
+        }
+      }
+
+      utterance.onend = () => {
+        if (activeSpeakBtn === btn) playNextBrowserTTSChunk(btn);
+      };
+
+      utterance.onerror = (e) => {
+        if (e.error !== 'interrupted' && e.error !== 'canceled') {
+          console.warn('Speech synthesis chunk error:', e);
+        }
+        stopTTS();
+      };
+
+      if (window.speechSynthesis.paused) {
+        window.speechSynthesis.resume();
+      }
+      window.speechSynthesis.speak(utterance);
+    }
+
+    function speakAct(btn) {
+      // If already speaking from this button, toggle off
+      if (activeSpeakBtn === btn) {
+        stopTTS();
+        return;
+      }
+
+      // Stop any other active speech
+      stopTTS();
+
+      const raw = getAiMsgText(btn);
+      const cleanText = stripMarkdownForTTS(raw);
+      if (!cleanText) {
+        toast('No text to read.');
+        return;
+      }
+
+      activeSpeakBtn = btn;
+      btn.classList.add('speaking');
+      btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>Stop`;
+
+      ttsAbortController = new AbortController();
+
+      // Request high-fidelity Gemini Text-to-Speech API
+      fetch('/api/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: cleanText,
+          gender: state.voiceGender || 'male'
+        }),
+        signal: ttsAbortController.signal
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (activeSpeakBtn !== btn) return; // cancelled or toggled off
+
+        if (data && data.audio_base64) {
+          const audio = new Audio(`data:${data.mime_type || 'audio/wav'};base64,${data.audio_base64}`);
+          currentAudioPlayer = audio;
+          audio.onended = () => resetSpeakBtn(btn);
+          audio.onerror = (err) => {
+            console.warn('Gemini audio playback error, falling back to browser voice:', err);
+            currentAudioPlayer = null;
+            playBrowserTTS(cleanText, btn);
+          };
+          audio.play().catch(err => {
+            console.warn('Audio play failed, falling back to browser voice:', err);
+            currentAudioPlayer = null;
+            playBrowserTTS(cleanText, btn);
+          });
+        } else {
+          // Gemini API key not yet set or error -> smooth browser fallback
+          if (data && data.error && !data.fallback) {
+            console.info('[TTS] Using browser voice fallback:', data.error);
+          }
+          playBrowserTTS(cleanText, btn);
+        }
+      })
+      .catch(err => {
+        if (err.name === 'AbortError') return;
+        console.warn('[TTS] Backend request failed, using browser fallback:', err);
+        if (activeSpeakBtn === btn) {
+          playBrowserTTS(cleanText, btn);
+        }
+      });
+    }
+
+    function copyAct(btn) {
+      const text = getAiMsgText(btn);
+      if (!text) {
+        toast('Nothing to copy.');
+        return;
+      }
       navigator.clipboard.writeText(text).then(() => {
         const orig = btn.innerHTML;
         btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><polyline points="20 6 9 17 4 12"/></svg>Copied!`;
         btn.classList.add('active');
         setTimeout(() => { btn.innerHTML = orig; btn.classList.remove('active'); }, 2000);
+      }).catch(() => {
+        toast('Failed to copy to clipboard');
       });
     }
     function regenAct() {

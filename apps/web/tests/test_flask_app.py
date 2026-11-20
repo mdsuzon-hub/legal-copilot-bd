@@ -208,6 +208,50 @@ class TestFlaskWebApp(unittest.TestCase):
         self.assertEqual(len(data['notices']), 1)
         self.assertEqual(data['sources'][0]['title'], 'DIU Notice Board')
 
+    # ── TTS Endpoint Tests ───────────────────────────────────────────────────
+    def test_tts_empty_text(self):
+        res = self.client.post('/api/tts', json={'text': ''})
+        self.assertEqual(res.status_code, 400)
+        data = res.get_json()
+        self.assertEqual(data.get('error'), 'Text is required')
+
+    def test_tts_missing_gemini_key_fallback(self):
+        with patch.object(config, 'GEMINI_API_KEY', ''):
+            res = self.client.post('/api/tts', json={'text': 'Hello world'})
+            self.assertEqual(res.status_code, 200)
+            data = res.get_json()
+            self.assertTrue(data.get('fallback'))
+            self.assertIn('GEMINI_API_KEY', data.get('error', ''))
+
+    @patch('requests.post')
+    def test_tts_gemini_success(self, mock_post):
+        mock_resp = MagicMock()
+        mock_resp.ok = True
+        mock_resp.status_code = 200
+        # Dummy 16-bit PCM bytes
+        dummy_pcm = b'\x00\x00' * 100
+        mock_resp.json.return_value = {
+            'candidates': [{
+                'content': {
+                    'parts': [{
+                        'inlineData': {
+                            'mimeType': 'audio/pcm;rate=24000',
+                            'data': base64.b64encode(dummy_pcm).decode('ascii')
+                        }
+                    }]
+                }
+            }]
+        }
+        mock_post.return_value = mock_resp
+
+        with patch.object(config, 'GEMINI_API_KEY', 'fake_gemini_key'):
+            res = self.client.post('/api/tts', json={'text': 'The Penal Code of Bangladesh', 'gender': 'female'})
+            self.assertEqual(res.status_code, 200)
+            data = res.get_json()
+            self.assertEqual(data.get('source'), 'gemini')
+            self.assertEqual(data.get('mime_type'), 'audio/wav')
+            self.assertTrue(len(data.get('audio_base64', '')) > 0)
+
 
 if __name__ == '__main__':
     unittest.main()

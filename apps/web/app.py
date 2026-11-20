@@ -9,12 +9,14 @@
 
 import base64
 import html
+import io
 import json
 import logging
 import os
 import re
 import tempfile
 import time
+import wave
 from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import parse_qs, quote, unquote, urljoin, urlparse
@@ -843,6 +845,149 @@ def api_endpoint():
     except Exception as e:
         logger.error(f"[DIU API] Error: {e}", exc_info=True)
         return json_error(f"Server error: {e}", 500)
+
+
+# ── Gemini Text-to-Speech (TTS) ──────────────────────────────────────────────
+def pcm_to_wav(pcm_bytes: bytes, sample_rate: int = 24000, num_channels: int = 1, sampwidth: int = 2) -> bytes:
+    """Wraps raw 16-bit PCM bytes into a standard RIFF WAV container."""
+    buf = io.BytesIO()
+    with wave.open(buf, 'wb') as wf:
+        wf.setnchannels(num_channels)
+        wf.setsampwidth(sampwidth)
+        wf.setframerate(sample_rate)
+        wf.writeframes(pcm_bytes)
+    return buf.getvalue()
+
+
+def generate_gemini_tts(text: str, gender: str = 'male') -> dict:
+    """
+    Calls Google Gemini API (gemini-2.0-flash) with response_modalities=['AUDIO']
+    to generate ultra-realistic speech synthesis in English and Bengali.
+    """
+    api_key = config.GEMINI_API_KEY
+    if not api_key:
+        raise ValueError("GEMINI_API_KEY is not configured")
+
+    voice_name = "Puck" if gender.lower() == 'male' else "Kore"
+
+    # Clean markdown and formatting so only the pure reply is spoken out loud
+    clean_text = text.strip()
+    clean_text = re.sub(r'```[\s\S]*?```', '', clean_text)
+    clean_text = re.sub(r'\[([^\]]+)\]\([^)]+\)', r'\1', clean_text)
+    clean_text = re.sub(r'\[\^?\d+\]', '', clean_text)
+    clean_text = re.sub(r'[*_~`>#-]', ' ', clean_text)
+    clean_text = re.sub(r'\s+', ' ', clean_text).strip()
+
+    payload = {
+        "contents": [{
+            "parts": [{"text": clean_text}]
+        }],
+        "generationConfig": {
+            "responseModalities": ["AUDIO"],
+            "speechConfig": {
+                "voiceConfig": {
+                    "prebuiltVoiceConfig": {
+                        "voiceName": voice_name
+                    }
+                }
+            }
+        }
+    }
+
+    # Supported Gemini TTS models (cascades on quota 429 / 404)
+    tts_models = [
+        "gemini-2.5-flash-preview-tts",
+        "gemini-3.8-flash-tts",
+        "gemini-3.1-flash-tts-preview",
+        "gemini-3.8-flash-lite-tts",
+    ]
+
+    last_error = None
+    data = None
+    used_model = None
+
+    for model in tts_models:
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
+        try:
+            resp = requests.post(url, json=payload, timeout=25)
+            if resp.ok:
+                data = resp.json()
+                used_model = model
+                break
+            else:
+                last_error = f"{model} returned {resp.status_code}: {resp.text[:150]}"
+                logger.warning(f"[Gemini TTS] Model {model} failed: {last_error}")
+        except Exception as e:
+            last_error = str(e)
+            logger.warning(f"[Gemini TTS] Request error for {model}: {e}")
+
+    if not data:
+        raise RuntimeError(f"All Gemini TTS models failed. Last error: {last_error}")
+    candidates = data.get('candidates', [])
+    if not candidates:
+        raise RuntimeError("No candidate returned by Gemini API")
+
+    parts = candidates[0].get('content', {}).get('parts', [])
+    audio_data_b64 = None
+    mime_type = "audio/wav"
+
+    for p in parts:
+        inline = p.get('inlineData')
+        if inline and inline.get('data'):
+            audio_data_b64 = inline.get('data')
+            mime_type = inline.get('mimeType', 'audio/wav')
+            break
+
+    if not audio_data_b64:
+        raise RuntimeError("No inline audio data found in Gemini response")
+
+    # If raw PCM audio was returned, wrap it into standard WAV for direct browser playback
+    if 'pcm' in mime_type.lower() or not (mime_type.startswith('audio/wav') or mime_type.startswith('audio/mp3') or mime_type.startswith('audio/ogg')):
+        raw_pcm = base64.b64decode(audio_data_b64)
+        rate_match = re.search(r'rate=(\d+)', mime_type)
+        sample_rate = int(rate_match.group(1)) if rate_match else 24000
+        wav_bytes = pcm_to_wav(raw_pcm, sample_rate=sample_rate)
+        audio_data_b64 = base64.b64encode(wav_bytes).decode('ascii')
+        mime_type = "audio/wav"
+
+    return {
+        "audio_base64": audio_data_b64,
+        "mime_type": mime_type,
+        "source": "gemini",
+        "voice": voice_name,
+        "model": used_model
+    }
+
+
+@app.route('/api/tts', methods=['POST', 'OPTIONS'])
+def tts_endpoint():
+    if request.method == 'OPTIONS':
+        return cors_response('', 204)
+
+    text = (request.form.get('text') or (request.json.get('text') if request.is_json else '') or '').strip()
+    gender = (request.form.get('gender') or (request.json.get('gender') if request.is_json else 'male') or 'male').strip()
+
+    if not text:
+        return json_error('Text is required', 400)
+    if len(text) > 4000:
+        text = text[:4000]
+
+    # If GEMINI_API_KEY is not configured, inform client gracefully so it falls back to browser voice
+    if not config.GEMINI_API_KEY:
+        return cors_response({
+            'error': 'GEMINI_API_KEY is not configured',
+            'fallback': True
+        }, 200)
+
+    try:
+        tts_result = generate_gemini_tts(text, gender=gender)
+        return cors_response(tts_result, 200)
+    except Exception as e:
+        logger.error(f"[TTS Endpoint] Gemini error: {e}", exc_info=True)
+        return cors_response({
+            'error': str(e),
+            'fallback': True
+        }, 200)
 
 
 # ── Server Runner ────────────────────────────────────────────────────────────

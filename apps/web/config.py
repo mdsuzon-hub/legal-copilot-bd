@@ -28,6 +28,9 @@ _load_env_file(BASE_DIR / '.env')
 # Groq API Key
 GROQ_API_KEY = os.environ.get('GROQ_API_KEY', '').strip()
 
+# Gemini API Key (for high-fidelity Text-to-Speech)
+GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '').strip()
+
 # Groq Model
 GROQ_MODEL = os.environ.get('GROQ_MODEL', 'openai/gpt-oss-120b').strip() or 'openai/gpt-oss-120b'
 
