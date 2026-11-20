@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 =============================================================================
-  DIU Assistant — Production Flask Backend
+  Legal Copilot BD — Production Flask Backend
   Converted from api.php (PHP -> Flask)
   Handles: General Chat · RAG · Web Search · DIU Notice Scraping
 =============================================================================
@@ -29,7 +29,7 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s [%(levelname)s] %(message)s'
 )
-logger = logging.getLogger('diu_assistant')
+logger = logging.getLogger('legal_copilot_bd')
 
 # ── Flask App Setup ──────────────────────────────────────────────────────────
 BASE_DIR = Path(__file__).resolve().parent
@@ -248,32 +248,24 @@ def generate_related(question: str, answer: str) -> list:
         logger.warning(f"generate_related error: {e}")
 
     return [
-        'Can you tell me more about this topic?',
-        'What are the official DIU resources for this?',
-        'Are there any recent updates related to this?',
+        'Can you tell me more about this legal topic?',
+        'What are the relevant Bangladesh statutes or sections?',
+        'Are there any landmark Supreme Court precedents on this?',
     ]
 
 
 # ── Handler: General Chat ────────────────────────────────────────────────────
 def handle_general(question: str, history: list, file_data: dict = None) -> dict:
-    system_prompt = """You are the DIU (Daffodil International University) Smart Assistant — a helpful, 
-accurate, and friendly AI for students, faculty, and staff of Daffodil International 
-University, Dhaka, Bangladesh.
+    system_prompt = """You are Legal Copilot BD — a specialized AI legal assistant for Bangladesh law, 
+acts, statutes, judicial precedents, and procedural research.
 
 Your role:
-- Answer general questions conversationally and helpfully
-- Provide accurate information about DIU when you know it
-- For university-specific queries (notices, results, schedules), suggest users 
-  enable "RAG" or "Web" search mode for live data
-- Be concise but thorough
-- Respond in the same language the user writes in (Bengali or English)
-- For greetings, be warm and welcoming
-
-DIU Quick Facts:
-- Location: Daffodil Smart City, Birulia, Savar, Dhaka-1216, Bangladesh
-- Website: diu.edu.bd | noticeboard.diu.edu.bd
-- Founded: 2002
-- Notable for: Software Engineering, CSE, Business, Law departments"""
+- Answer legal questions with accuracy, referencing relevant Bangladesh laws, acts, and penal/civil codes
+- Explain legal concepts clearly in plain language (Bengali or English depending on user input)
+- Reference the Constitution of Bangladesh, Penal Code, CrPC, CPC, and relevant Acts where appropriate
+- For specific case laws or statutes, advise users to enable "RAG" mode for verified document citations
+- Clarify that AI answers provide legal information and research assistance, not formal legal counsel
+- Be professional, structured, objective, and precise"""
 
     messages = build_messages(system_prompt, history, question, file_data)
     res = call_groq(messages, temp=0.7, max_tokens=2048)
@@ -542,14 +534,14 @@ def handle_web(question: str, history: list) -> dict:
         context_parts.append(f"[{i+1}] {r.get('title', '')}\nURL: {r.get('url', '')}\n{r.get('snippet', '')}")
     context = "\n\n".join(context_parts)
 
-    system_prompt = f"""You are the DIU Smart Assistant with web search capability.
+    system_prompt = f"""You are Legal Copilot BD with web search capability.
 The user's question has been searched on the web. Use the search results below 
-to provide an accurate, helpful answer.
+to provide an accurate, helpful answer regarding Bangladesh laws, court judgments, gazettes, or public notices.
 
 Rules:
 - Synthesize information from the search results
 - Cite sources by number [1], [2] etc. when referencing specific facts
-- If results are about DIU/university topics, focus on those
+- Focus on authoritative legal sources, statutes, gazettes, and court precedents
 - Be concise and clear
 - If search results don't answer the question, say so honestly
 - Always end with: "📄 Sources: [list the relevant source numbers and titles]"

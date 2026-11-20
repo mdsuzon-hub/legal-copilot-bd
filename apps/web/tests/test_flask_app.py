@@ -22,13 +22,13 @@ class TestFlaskWebApp(unittest.TestCase):
     def test_index_route(self):
         res = self.client.get('/')
         self.assertEqual(res.status_code, 200)
-        self.assertIn(b'DIU Assistant', res.data)
+        self.assertIn(b'Legal Copilot BD', res.data)
         self.assertIn(b"API_BASE = 'api'", res.data)
 
     def test_index_html_route(self):
         res = self.client.get('/index.html')
         self.assertEqual(res.status_code, 200)
-        self.assertIn(b'DIU Assistant', res.data)
+        self.assertIn(b'Legal Copilot BD', res.data)
 
     def test_scorces_css_route(self):
         res = self.client.get('/scorces/style.css')
