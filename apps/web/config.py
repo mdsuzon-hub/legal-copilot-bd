@@ -44,6 +44,10 @@ DIU_NOTICE_URL = os.environ.get('DIU_NOTICE_URL', 'https://noticeboard.diu.edu.b
 CACHE_DIR = Path(os.environ.get('CACHE_DIR', str(BASE_DIR / 'live' / 'rag_cache')))
 NOTICE_CACHE_TTL = int(os.environ.get('NOTICE_CACHE_TTL', '600'))  # 10 minutes
 
+# Supabase Credentials (optional)
+SUPABASE_URL = os.environ.get('SUPABASE_URL', '').strip().rstrip('/')
+SUPABASE_KEY = (os.environ.get('SUPABASE_KEY', '') or os.environ.get('SUPABASE_ANON_KEY', '') or os.environ.get('SUPABASE_SERVICE_ROLE_KEY', '')).strip()
+
 # Model display names
 MODEL_NAMES = {
     'openai/gpt-oss-120b': 'GPT-OSS 120B',
