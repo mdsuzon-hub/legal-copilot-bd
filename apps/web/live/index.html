@@ -88,7 +88,9 @@
           <div class="model-dropdown" id="model-dropdown">
             <div class="md-header">Select Model</div>
             <div class="md-item selected" data-model="sonar-pro" onclick="selectModel(this)">
-              <div class="md-icon" style="background:rgba(32,128,141,.15)">🔍</div>
+              <div class="md-icon" style="background:rgba(32,128,141,.15)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              </div>
               <div class="md-info">
                 <div class="md-label">Sonar Pro</div>
                 <div class="md-desc">Best accuracy · Real-time web</div>
@@ -96,7 +98,9 @@
               <span class="md-badge">Default</span>
             </div>
             <div class="md-item" data-model="sonar" onclick="selectModel(this)">
-              <div class="md-icon" style="background:rgba(32,128,141,.1)">⚡</div>
+              <div class="md-icon" style="background:rgba(32,128,141,.1)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+              </div>
               <div class="md-info">
                 <div class="md-label">Sonar</div>
                 <div class="md-desc">Fast · Everyday queries</div>
@@ -105,7 +109,9 @@
             <div class="md-sep"></div>
             <div class="md-header">Research</div>
             <div class="md-item" data-model="deep-research" onclick="selectModel(this)">
-              <div class="md-icon" style="background:rgba(168,85,247,.15)">🧠</div>
+              <div class="md-icon" style="background:rgba(168,85,247,.15)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+              </div>
               <div class="md-info">
                 <div class="md-label">Deep Research</div>
                 <div class="md-desc">Multi-step · Long reports</div>
@@ -114,7 +120,9 @@
                 style="background:rgba(168,85,247,.15);color:#c084fc;border-color:rgba(168,85,247,.2)">Pro</span>
             </div>
             <div class="md-item" data-model="r1" onclick="selectModel(this)">
-              <div class="md-icon" style="background:rgba(245,158,11,.12)">💡</div>
+              <div class="md-icon" style="background:rgba(245,158,11,.12)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M15.09 13.56A6 6 0 1 0 8.91 13.56C9.64 14.39 10 15.67 10 17h4c0-1.33.36-2.61 1.09-3.44z"/></svg>
+              </div>
               <div class="md-info">
                 <div class="md-label">R1 Reasoning</div>
                 <div class="md-desc">Chain-of-thought · Complex logic</div>
@@ -125,14 +133,18 @@
             <div class="md-sep"></div>
             <div class="md-header">Writing</div>
             <div class="md-item" data-model="claude" onclick="selectModel(this)">
-              <div class="md-icon" style="background:rgba(232,121,56,.12)">✍️</div>
+              <div class="md-icon" style="background:rgba(232,121,56,.12)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/></svg>
+              </div>
               <div class="md-info">
                 <div class="md-label">Claude Sonnet</div>
                 <div class="md-desc">Creative writing · Nuanced answers</div>
               </div>
             </div>
             <div class="md-item" data-model="gpt4o" onclick="selectModel(this)">
-              <div class="md-icon" style="background:rgba(16,185,129,.12)">🤖</div>
+              <div class="md-icon" style="background:rgba(16,185,129,.12)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg>
+              </div>
               <div class="md-info">
                 <div class="md-label">GPT-4o</div>
                 <div class="md-desc">Multimodal · Broad knowledge</div>
@@ -550,10 +562,10 @@
       // Check auth status from redirect URL parameters
       const params = new URLSearchParams(window.location.search);
       if (params.get('auth_success')) {
-        toast('🎉 Signed in successfully with Google!');
+        toast('Signed in successfully with Google!');
         window.history.replaceState({}, document.title, window.location.pathname);
       } else if (params.get('auth_error')) {
-        toast('⚠️ ' + decodeURIComponent(params.get('auth_error')), 4000);
+        toast(decodeURIComponent(params.get('auth_error')), 4000);
         window.history.replaceState({}, document.title, window.location.pathname);
       } else if (params.get('logged_out')) {
         toast('Signed out successfully.');
@@ -617,7 +629,7 @@
         ragBtn && ragBtn.classList.toggle('active', mode === 'rag');
         webBtn && webBtn.classList.toggle('active', mode === 'web');
         syncModeBtns();
-        toast(mode === 'rag' ? '📚 RAG: Searching indexed documents' : '🌐 Web: Searching the web');
+        toast(mode === 'rag' ? 'RAG: Searching indexed documents' : 'Web: Searching the web');
       }
     }
 
@@ -652,10 +664,9 @@
     }
     function histHTML(c) {
       const active = state.current?.id === c.id ? 'active' : '';
-      const modeIcon = c.mode === 'rag' ? '📚' : c.mode === 'web' ? '🌐' : '💬';
       return `<div class="hi ${active}" onclick="loadChat('${c.id}')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-    <span title="${esc(c.title)}">${modeIcon} ${esc(c.title)}</span>
+    <span title="${esc(c.title)}">${esc(c.title)}</span>
     <button class="hd" onclick="delChat('${c.id}',event)" title="Delete">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="12" height="12"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
     </button>
@@ -688,13 +699,17 @@
     function newChat() {
       if (state.streaming) stopStream();
       state.current = null;
+      const wrap = document.getElementById('chat-wrap');
+      if (wrap) wrap.innerHTML = '';
+      const cq = document.getElementById('chat-qi');
+      if (cq) { cq.value = ''; growTA(cq); }
       document.getElementById('home').style.display = '';
       document.getElementById('chat-view').style.display = 'none';
       document.getElementById('bottom-bar').style.display = 'none';
       document.getElementById('share-btn').style.display = 'none';
       document.getElementById('nb-title').textContent = 'New Thread';
       const hq = document.getElementById('home-qi');
-      hq.value = ''; growTA(hq);
+      if (hq) { hq.value = ''; growTA(hq); }
       renderHistory(); closeSidebar();
     }
     document.getElementById('new-chat-btn').addEventListener('click', newChat);
@@ -756,7 +771,11 @@
         messages: []
       };
       state.chats.unshift(state.current);
-      save(); showChatUI();
+      save();
+      const wrap = document.getElementById('chat-wrap');
+      if (wrap) wrap.innerHTML = '';
+      document.getElementById('nb-title').textContent = state.current.title;
+      showChatUI();
       addTurn(text);
     }
 
@@ -869,7 +888,7 @@
           <div class="ai-av"><svg viewBox="0 0 24 24" style="width:13px;height:13px;fill:white"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
           DIU Assistant
         </div>
-        <div class="ai-body"><span style="color:#ef4444">⚠ Error: ${esc(err.message)}</span><br><span style="color:var(--text3);font-size:13px">Make sure the Flask backend is running and your API key is configured.</span></div>`;
+        <div class="ai-body"><span style="color:#ef4444;display:inline-flex;align-items:center;gap:4px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Error: ${esc(err.message)}</span><br><span style="color:var(--text3);font-size:13px">Make sure the Flask backend is running and your API key is configured.</span></div>`;
         }
       }
 
@@ -904,10 +923,10 @@
     // ══════════════════════════════════════════════════════════════════════
     function buildAiMsgHTML(data) {
       const mode = data.mode || 'general';
-      const modeBadge = mode === 'web' ? `<span class="mode-badge web">🌐 Web Search</span>` :
-        mode === 'rag' ? `<span class="mode-badge rag">📚 Document RAG</span>` :
-          mode === 'notice' ? `<span class="mode-badge notice">📋 DIU Notices</span>` :
-            `<span class="mode-badge general">💬 General</span>`;
+      const modeBadge = mode === 'web' ? `<span class="mode-badge web"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>Web Search</span>` :
+        mode === 'rag' ? `<span class="mode-badge rag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Document RAG</span>` :
+          mode === 'notice' ? `<span class="mode-badge notice"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>DIU Notices</span>` :
+            `<span class="mode-badge general"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>General</span>`;
 
       const showSources = document.getElementById('src-tog').classList.contains('on');
       const showRelated = document.getElementById('related-tog').classList.contains('on');
@@ -963,7 +982,7 @@
     <div class="src-card" title="${esc(s.url || '')}" onclick="window.open('${esc(s.url || '#')}','_blank')">
       <div style="display:flex;align-items:center;gap:6px">
         <div class="src-num">${i + 1}</div>
-        <span class="src-fav">${s.favicon || '🔗'}</span>
+        <span class="src-fav">${s.favicon ? (s.favicon.startsWith('http') ? `<img src="${esc(s.favicon)}" width="14" height="14" style="vertical-align:middle;border-radius:2px" alt="">` : esc(s.favicon)) : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13" style="display:inline-block;vertical-align:middle"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>'}</span>
       </div>
       <div class="src-title">${esc(s.title || s.url || 'Source')}</div>
       <div class="src-url">${esc(s.url || '')}</div>
@@ -976,9 +995,9 @@
     <div class="notice-card" onclick="${n.url ? `window.open('${esc(n.url)}','_blank')` : ''}">
       <div class="notice-card-title">${esc(n.title || 'Notice')}</div>
       <div class="notice-card-meta">
-        ${n.date ? `<span>📅 ${esc(n.date)}</span>` : ''}
-        ${n.category ? `<span>🏷 ${esc(n.category)}</span>` : ''}
-        ${n.url ? `<span>🔗 View Notice</span>` : ''}
+        ${n.date ? `<span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11" style="display:inline-block;vertical-align:-1px;margin-right:3px"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>${esc(n.date)}</span>` : ''}
+        ${n.category ? `<span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11" style="display:inline-block;vertical-align:-1px;margin-right:3px"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>${esc(n.category)}</span>` : ''}
+        ${n.url ? `<span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11" style="display:inline-block;vertical-align:-1px;margin-right:3px"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>View Notice</span>` : ''}
       </div>
     </div>`).join('')}</div>`;
     }
@@ -1057,7 +1076,7 @@
     }
     function thumbAct(btn, dir) {
       btn.classList.toggle('active');
-      toast(dir === 'up' ? '👍 Positive feedback recorded' : '👎 Feedback noted — we\'ll improve');
+      toast(dir === 'up' ? 'Positive feedback recorded' : 'Feedback noted — we\'ll improve');
     }
     function shareAct() { shareThread(); }
     function copyCode(btn) {
@@ -1207,10 +1226,10 @@
           closeLogin();
           toast(`Welcome, ${state.user.name}!`);
         } else {
-          toast('⚠️ ' + (data.error || 'Google login failed'));
+          toast(data.error || 'Google login failed');
         }
       } catch (e) {
-        toast('⚠️ Authentication error: ' + e.message);
+        toast('Authentication error: ' + e.message);
       }
     }
 
