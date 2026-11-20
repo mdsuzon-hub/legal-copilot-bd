@@ -24,13 +24,6 @@ import requests
 from flask import Flask, jsonify, request, send_from_directory, session, redirect, url_for
 
 import config
-import db
-
-# Initialize database
-try:
-    db.init_db()
-except Exception as e:
-    logging.warning(f"Database initialization error: {e}")
 
 # ── Logging ──────────────────────────────────────────────────────────────────
 logging.basicConfig(
@@ -45,7 +38,7 @@ LIVE_DIR = BASE_DIR / 'live'
 SCORCES_DIR = BASE_DIR / 'scorces'
 
 app = Flask(__name__, static_folder=None)
-app.secret_key = config.SECRET_KEY
+app.secret_key = os.environ.get('SECRET_KEY', 'diu-assistant-session-secret-2026')
 app.config['MAX_CONTENT_LENGTH'] = 30 * 1024 * 1024  # 30MB max upload
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
@@ -113,7 +106,7 @@ def google_login():
     state = secrets.token_urlsafe(16)
     session['oauth_state'] = state
 
-    redirect_uri = config.GOOGLE_REDIRECT_URI or (request.host_url.rstrip('/') + '/auth/google/callback')
+    redirect_uri = request.host_url.rstrip('/') + '/auth/google/callback'
 
     auth_url = (
         'https://accounts.google.com/o/oauth2/v2/auth?'
@@ -147,7 +140,7 @@ def google_callback():
         logger.warning("[OAuth] State mismatch / CSRF warning")
         # Log warning but proceed if state is otherwise valid
 
-    redirect_uri = config.GOOGLE_REDIRECT_URI or (request.host_url.rstrip('/') + '/auth/google/callback')
+    redirect_uri = request.host_url.rstrip('/') + '/auth/google/callback'
 
     # Exchange authorization code for tokens
     try:
@@ -188,15 +181,14 @@ def google_callback():
         if not email:
             return redirect('/?auth_error=' + quote('No email provided by Google account'))
 
-        # Register new user or update existing (prevents duplicate accounts based on email)
-        user, is_new = db.get_or_create_user(
-            google_id=google_id,
-            email=email,
-            name=name,
-            picture=picture,
-        )
+        user = {
+            'google_id': google_id,
+            'email': email,
+            'name': name,
+            'picture': picture,
+        }
         session['user'] = user
-        logger.info(f"[OAuth] User signed in via Google: {email} (new_user={is_new})")
+        logger.info(f"[OAuth] User signed in via Google: {email}")
 
         return redirect('/?auth_success=1')
 
@@ -244,20 +236,18 @@ def google_verify_token():
         if not email:
             return json_error('No email found in Google token', 400)
 
-        # Register or update user in SQLite database (no duplicates based on email)
-        user, is_new = db.get_or_create_user(
-            google_id=google_id,
-            email=email,
-            name=name,
-            picture=picture,
-        )
+        user = {
+            'google_id': google_id,
+            'email': email,
+            'name': name,
+            'picture': picture,
+        }
         session['user'] = user
-        logger.info(f"[OAuth] User verified via ID token: {email} (new_user={is_new})")
+        logger.info(f"[OAuth] User verified via ID token: {email}")
 
         return cors_response({
             'success': True,
             'user': user,
-            'is_new': is_new,
         })
 
     except Exception as e:
