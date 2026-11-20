@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 =============================================================================
-  DIU Assistant — Production Flask Backend
+  Legal Copilot BD — Production Flask Backend
   Converted from api.php (PHP -> Flask)
   Handles: General Chat · RAG · Web Search · DIU Notice Scraping
 =============================================================================
@@ -9,12 +9,14 @@
 
 import base64
 import html
+import io
 import json
 import logging
 import os
 import re
 import tempfile
 import time
+import wave
 from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import parse_qs, quote, unquote, urljoin, urlparse
@@ -29,7 +31,7 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s [%(levelname)s] %(message)s'
 )
-logger = logging.getLogger('diu_assistant')
+logger = logging.getLogger('legal_copilot_bd')
 
 # ── Flask App Setup ──────────────────────────────────────────────────────────
 BASE_DIR = Path(__file__).resolve().parent
@@ -248,32 +250,24 @@ def generate_related(question: str, answer: str) -> list:
         logger.warning(f"generate_related error: {e}")
 
     return [
-        'Can you tell me more about this topic?',
-        'What are the official DIU resources for this?',
-        'Are there any recent updates related to this?',
+        'Can you tell me more about this legal topic?',
+        'What are the relevant Bangladesh statutes or sections?',
+        'Are there any landmark Supreme Court precedents on this?',
     ]
 
 
 # ── Handler: General Chat ────────────────────────────────────────────────────
 def handle_general(question: str, history: list, file_data: dict = None) -> dict:
-    system_prompt = """You are the DIU (Daffodil International University) Smart Assistant — a helpful, 
-accurate, and friendly AI for students, faculty, and staff of Daffodil International 
-University, Dhaka, Bangladesh.
+    system_prompt = """You are Legal Copilot BD — a specialized AI legal assistant for Bangladesh law, 
+acts, statutes, judicial precedents, and procedural research.
 
 Your role:
-- Answer general questions conversationally and helpfully
-- Provide accurate information about DIU when you know it
-- For university-specific queries (notices, results, schedules), suggest users 
-  enable "RAG" or "Web" search mode for live data
-- Be concise but thorough
-- Respond in the same language the user writes in (Bengali or English)
-- For greetings, be warm and welcoming
-
-DIU Quick Facts:
-- Location: Daffodil Smart City, Birulia, Savar, Dhaka-1216, Bangladesh
-- Website: diu.edu.bd | noticeboard.diu.edu.bd
-- Founded: 2002
-- Notable for: Software Engineering, CSE, Business, Law departments"""
+- Answer legal questions with accuracy, referencing relevant Bangladesh laws, acts, and penal/civil codes
+- Explain legal concepts clearly in plain language (Bengali or English depending on user input)
+- Reference the Constitution of Bangladesh, Penal Code, CrPC, CPC, and relevant Acts where appropriate
+- For specific case laws or statutes, advise users to enable "RAG" mode for verified document citations
+- Clarify that AI answers provide legal information and research assistance, not formal legal counsel
+- Be professional, structured, objective, and precise"""
 
     messages = build_messages(system_prompt, history, question, file_data)
     res = call_groq(messages, temp=0.7, max_tokens=2048)
@@ -542,14 +536,14 @@ def handle_web(question: str, history: list) -> dict:
         context_parts.append(f"[{i+1}] {r.get('title', '')}\nURL: {r.get('url', '')}\n{r.get('snippet', '')}")
     context = "\n\n".join(context_parts)
 
-    system_prompt = f"""You are the DIU Smart Assistant with web search capability.
+    system_prompt = f"""You are Legal Copilot BD with web search capability.
 The user's question has been searched on the web. Use the search results below 
-to provide an accurate, helpful answer.
+to provide an accurate, helpful answer regarding Bangladesh laws, court judgments, gazettes, or public notices.
 
 Rules:
 - Synthesize information from the search results
 - Cite sources by number [1], [2] etc. when referencing specific facts
-- If results are about DIU/university topics, focus on those
+- Focus on authoritative legal sources, statutes, gazettes, and court precedents
 - Be concise and clear
 - If search results don't answer the question, say so honestly
 - Always end with: "📄 Sources: [list the relevant source numbers and titles]"
@@ -851,6 +845,149 @@ def api_endpoint():
     except Exception as e:
         logger.error(f"[DIU API] Error: {e}", exc_info=True)
         return json_error(f"Server error: {e}", 500)
+
+
+# ── Gemini Text-to-Speech (TTS) ──────────────────────────────────────────────
+def pcm_to_wav(pcm_bytes: bytes, sample_rate: int = 24000, num_channels: int = 1, sampwidth: int = 2) -> bytes:
+    """Wraps raw 16-bit PCM bytes into a standard RIFF WAV container."""
+    buf = io.BytesIO()
+    with wave.open(buf, 'wb') as wf:
+        wf.setnchannels(num_channels)
+        wf.setsampwidth(sampwidth)
+        wf.setframerate(sample_rate)
+        wf.writeframes(pcm_bytes)
+    return buf.getvalue()
+
+
+def generate_gemini_tts(text: str, gender: str = 'male') -> dict:
+    """
+    Calls Google Gemini API (gemini-2.0-flash) with response_modalities=['AUDIO']
+    to generate ultra-realistic speech synthesis in English and Bengali.
+    """
+    api_key = config.GEMINI_API_KEY
+    if not api_key:
+        raise ValueError("GEMINI_API_KEY is not configured")
+
+    voice_name = "Puck" if gender.lower() == 'male' else "Kore"
+
+    # Clean markdown and formatting so only the pure reply is spoken out loud
+    clean_text = text.strip()
+    clean_text = re.sub(r'```[\s\S]*?```', '', clean_text)
+    clean_text = re.sub(r'\[([^\]]+)\]\([^)]+\)', r'\1', clean_text)
+    clean_text = re.sub(r'\[\^?\d+\]', '', clean_text)
+    clean_text = re.sub(r'[*_~`>#-]', ' ', clean_text)
+    clean_text = re.sub(r'\s+', ' ', clean_text).strip()
+
+    payload = {
+        "contents": [{
+            "parts": [{"text": clean_text}]
+        }],
+        "generationConfig": {
+            "responseModalities": ["AUDIO"],
+            "speechConfig": {
+                "voiceConfig": {
+                    "prebuiltVoiceConfig": {
+                        "voiceName": voice_name
+                    }
+                }
+            }
+        }
+    }
+
+    # Supported Gemini TTS models (cascades on quota 429 / 404)
+    tts_models = [
+        "gemini-2.5-flash-preview-tts",
+        "gemini-3.8-flash-tts",
+        "gemini-3.1-flash-tts-preview",
+        "gemini-3.8-flash-lite-tts",
+    ]
+
+    last_error = None
+    data = None
+    used_model = None
+
+    for model in tts_models:
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
+        try:
+            resp = requests.post(url, json=payload, timeout=25)
+            if resp.ok:
+                data = resp.json()
+                used_model = model
+                break
+            else:
+                last_error = f"{model} returned {resp.status_code}: {resp.text[:150]}"
+                logger.warning(f"[Gemini TTS] Model {model} failed: {last_error}")
+        except Exception as e:
+            last_error = str(e)
+            logger.warning(f"[Gemini TTS] Request error for {model}: {e}")
+
+    if not data:
+        raise RuntimeError(f"All Gemini TTS models failed. Last error: {last_error}")
+    candidates = data.get('candidates', [])
+    if not candidates:
+        raise RuntimeError("No candidate returned by Gemini API")
+
+    parts = candidates[0].get('content', {}).get('parts', [])
+    audio_data_b64 = None
+    mime_type = "audio/wav"
+
+    for p in parts:
+        inline = p.get('inlineData')
+        if inline and inline.get('data'):
+            audio_data_b64 = inline.get('data')
+            mime_type = inline.get('mimeType', 'audio/wav')
+            break
+
+    if not audio_data_b64:
+        raise RuntimeError("No inline audio data found in Gemini response")
+
+    # If raw PCM audio was returned, wrap it into standard WAV for direct browser playback
+    if 'pcm' in mime_type.lower() or not (mime_type.startswith('audio/wav') or mime_type.startswith('audio/mp3') or mime_type.startswith('audio/ogg')):
+        raw_pcm = base64.b64decode(audio_data_b64)
+        rate_match = re.search(r'rate=(\d+)', mime_type)
+        sample_rate = int(rate_match.group(1)) if rate_match else 24000
+        wav_bytes = pcm_to_wav(raw_pcm, sample_rate=sample_rate)
+        audio_data_b64 = base64.b64encode(wav_bytes).decode('ascii')
+        mime_type = "audio/wav"
+
+    return {
+        "audio_base64": audio_data_b64,
+        "mime_type": mime_type,
+        "source": "gemini",
+        "voice": voice_name,
+        "model": used_model
+    }
+
+
+@app.route('/api/tts', methods=['POST', 'OPTIONS'])
+def tts_endpoint():
+    if request.method == 'OPTIONS':
+        return cors_response('', 204)
+
+    text = (request.form.get('text') or (request.json.get('text') if request.is_json else '') or '').strip()
+    gender = (request.form.get('gender') or (request.json.get('gender') if request.is_json else 'male') or 'male').strip()
+
+    if not text:
+        return json_error('Text is required', 400)
+    if len(text) > 4000:
+        text = text[:4000]
+
+    # If GEMINI_API_KEY is not configured, inform client gracefully so it falls back to browser voice
+    if not config.GEMINI_API_KEY:
+        return cors_response({
+            'error': 'GEMINI_API_KEY is not configured',
+            'fallback': True
+        }, 200)
+
+    try:
+        tts_result = generate_gemini_tts(text, gender=gender)
+        return cors_response(tts_result, 200)
+    except Exception as e:
+        logger.error(f"[TTS Endpoint] Gemini error: {e}", exc_info=True)
+        return cors_response({
+            'error': str(e),
+            'fallback': True
+        }, 200)
 
 
 # ── Server Runner ────────────────────────────────────────────────────────────

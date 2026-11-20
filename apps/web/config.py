@@ -28,6 +28,9 @@ _load_env_file(BASE_DIR / '.env')
 # Groq API Key
 GROQ_API_KEY = os.environ.get('GROQ_API_KEY', '').strip()
 
+# Gemini API Key (for high-fidelity Text-to-Speech)
+GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '').strip()
+
 # Groq Model
 GROQ_MODEL = os.environ.get('GROQ_MODEL', 'openai/gpt-oss-120b').strip() or 'openai/gpt-oss-120b'
 
@@ -43,6 +46,10 @@ DIU_NOTICE_URL = os.environ.get('DIU_NOTICE_URL', 'https://noticeboard.diu.edu.b
 # Cache directory & TTL
 CACHE_DIR = Path(os.environ.get('CACHE_DIR', str(BASE_DIR / 'live' / 'rag_cache')))
 NOTICE_CACHE_TTL = int(os.environ.get('NOTICE_CACHE_TTL', '600'))  # 10 minutes
+
+# Supabase Credentials (optional)
+SUPABASE_URL = os.environ.get('SUPABASE_URL', '').strip().rstrip('/')
+SUPABASE_KEY = (os.environ.get('SUPABASE_KEY', '') or os.environ.get('SUPABASE_ANON_KEY', '') or os.environ.get('SUPABASE_SERVICE_ROLE_KEY', '')).strip()
 
 # Model display names
 MODEL_NAMES = {
