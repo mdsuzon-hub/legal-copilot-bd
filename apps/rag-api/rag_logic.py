@@ -113,7 +113,7 @@ def detect_acts(question: str, acts: Dict[str, dict]) -> List[str]:
             add(f"{int_to_roman(int(no))}-{year}")
     for m in _ACT_REF_BN.finditer(question):
         add(f"{kb_json.normalize_digits(m.group(2))}-{kb_json.normalize_digits(m.group(1))}")
-    qn = " ".join(re.sub(r"[^\w\s\u0980-\u09ff]", " ", q.lower()).split())
+    qn = " ".join(w for w in re.sub(r"[^\w\s\u0980-\u09ff]", " ", q.lower()).split() if w not in _GENERIC)
     for uid, a in acts.items():
         core = act_core(a.get("title", ""))
         if len(core) >= 10 and core in qn and uid not in found:

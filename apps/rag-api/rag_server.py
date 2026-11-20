@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
 ==========================================================================
-  RAG Server — Flask API on top of rag_pdf.py  (default port 5001)   v4
+  RAG Server — Flask API on top of rag.py  (default port 5001)   v4
 ==========================================================================
-  Same folder as: rag_pdf.py  kb_pdf.py  kb_json.py  rag_logic.py
+  Same folder as: rag.py  kb_json.py  kb_pdf.py  rag_logic.py
 
   INSTALL   pip install flask groq chromadb pdfplumber sentence-transformers
   RUN       export GROQ_API_KEY=...   (PowerShell: $env:GROQ_API_KEY="...")
@@ -59,7 +59,7 @@ except ImportError:
 
 import kb_json  # noqa: E402
 import rag_logic as L  # noqa: E402
-import rag_pdf as R  # noqa: E402
+import rag as R  # noqa: E402
 
 # ── Config ──────────────────────────────────────────────────────────────────
 

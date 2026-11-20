@@ -126,7 +126,7 @@ def main() -> int:
     if a.validate:
         return validate(items, Path(a.validate))
 
-    import rag_pdf as R  # heavy imports only for a real run
+    import rag as R  # heavy imports only for a real run
     over = dict(log_path="logs/eval_query.jsonl")
     if a.collection:
         over["collection"] = a.collection
