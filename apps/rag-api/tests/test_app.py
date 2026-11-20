@@ -9,9 +9,9 @@
   2. Install deps:
        pip install groq chromadb pdfplumber pypdf sentence-transformers
   3. Run:
-       python rag_pdf.py                          # interactive setup
-       python rag_pdf.py --pdf path/to/doc.pdf    # skip prompt
-       python rag_pdf.py --pdf doc.pdf --reset    # re-index (wipe old DB)
+       python rag.py                         # interactive setup
+       python rag.py --pdf path/to/doc.pdf   # skip prompt
+       python rag.py --pdf doc.pdf --reset   # re-index (wipe old DB)
 ========================================================
 """
 

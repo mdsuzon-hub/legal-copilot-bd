@@ -28,6 +28,9 @@ _load_env_file(BASE_DIR / '.env')
 # Groq API Key
 GROQ_API_KEY = os.environ.get('GROQ_API_KEY', '').strip()
 
+# Gemini API Key (for high-fidelity Text-to-Speech)
+GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '').strip()
+
 # Groq Model
 GROQ_MODEL = os.environ.get('GROQ_MODEL', 'openai/gpt-oss-120b').strip() or 'openai/gpt-oss-120b'
 
@@ -47,6 +50,9 @@ NOTICE_CACHE_TTL = int(os.environ.get('NOTICE_CACHE_TTL', '600'))  # 10 minutes
 # Google OAuth 2.0 Credentials
 GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID', '').strip()
 GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET', '').strip()
+# Supabase Credentials (optional)
+SUPABASE_URL = os.environ.get('SUPABASE_URL', '').strip().rstrip('/')
+SUPABASE_KEY = (os.environ.get('SUPABASE_KEY', '') or os.environ.get('SUPABASE_ANON_KEY', '') or os.environ.get('SUPABASE_SERVICE_ROLE_KEY', '')).strip()
 
 # Model display names
 MODEL_NAMES = {
