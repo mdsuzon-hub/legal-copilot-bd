@@ -47,6 +47,9 @@ DIU_NOTICE_URL = os.environ.get('DIU_NOTICE_URL', 'https://noticeboard.diu.edu.b
 CACHE_DIR = Path(os.environ.get('CACHE_DIR', str(BASE_DIR / 'live' / 'rag_cache')))
 NOTICE_CACHE_TTL = int(os.environ.get('NOTICE_CACHE_TTL', '600'))  # 10 minutes
 
+# Google OAuth 2.0 Credentials
+GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID', '').strip()
+GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET', '').strip()
 # Supabase Credentials (optional)
 SUPABASE_URL = os.environ.get('SUPABASE_URL', '').strip().rstrip('/')
 SUPABASE_KEY = (os.environ.get('SUPABASE_KEY', '') or os.environ.get('SUPABASE_ANON_KEY', '') or os.environ.get('SUPABASE_SERVICE_ROLE_KEY', '')).strip()

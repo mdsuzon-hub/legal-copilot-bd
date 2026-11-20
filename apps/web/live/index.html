@@ -12,6 +12,7 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
     rel="stylesheet">
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 
 <body>
@@ -51,7 +52,7 @@
         </svg>
         Settings
       </button>
-      <button class="u-btn" onclick="openLogin()">
+      <button class="u-btn" onclick="handleUserClick()">
         <div class="u-av" id="u-av">G</div>
         <div class="u-info">
           <div class="u-name" id="u-name">Guest User</div>
@@ -150,7 +151,7 @@
           </svg>
           Share
         </button>
-        <button class="nb-icon" title="Sign in" onclick="openLogin()">
+        <button class="nb-icon" title="Account" onclick="handleUserClick()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
             <circle cx="12" cy="7" r="4" />
@@ -361,6 +362,28 @@
     </div>
   </div>
 
+  <!-- ═══════════════════════ USER MENU MODAL ══════════════════════ -->
+  <div class="overlay" id="user-modal" onclick="if(event.target===this)closeUserMenu()">
+    <div class="modal" style="max-width:340px;text-align:center;">
+      <button class="modal-x" onclick="closeUserMenu()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15">
+          <line x1="18" y1="6" x2="6" y2="18" />
+          <line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
+      </button>
+      <div id="u-modal-avatar" style="width:64px;height:64px;border-radius:50%;margin:0 auto 12px;background:#20808D;color:#fff;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:600;overflow:hidden;"></div>
+      <div id="u-modal-name" style="font-size:17px;font-weight:600;color:var(--txt,#111);margin-bottom:4px;"></div>
+      <div id="u-modal-email" style="font-size:13px;color:var(--txt-muted,#666);margin-bottom:18px;"></div>
+      <div style="background:var(--bg-subtle,#f4f4f5);padding:10px 14px;border-radius:8px;font-size:13px;font-weight:500;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;">
+        <span>Account Plan</span>
+        <span style="color:#20808D;font-weight:600;">Pro · Unlimited</span>
+      </div>
+      <button class="m-btn" style="background:#ef4444;color:#fff;margin-top:0;" onclick="logout()">
+        Sign out
+      </button>
+    </div>
+  </div>
+
   <!-- ═══════════════════════ SETTINGS ═══════════════════════════ -->
   <div id="settings" onclick="if(event.target===this)closeSettings()">
     <div class="settings-sheet">
@@ -540,6 +563,23 @@
       // Init model dot
       document.getElementById('model-dot').style.background = state.model.dot;
       document.getElementById('model-dot').style.boxShadow = `0 0 6px ${state.model.dot}80`;
+
+      // Check current authentication & initialize Google Auth
+      checkAuthStatus();
+      initGoogleAuth();
+
+      // Check auth status from redirect URL parameters
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('auth_success')) {
+        toast('🎉 Signed in successfully with Google!');
+        window.history.replaceState({}, document.title, window.location.pathname);
+      } else if (params.get('auth_error')) {
+        toast('⚠️ ' + decodeURIComponent(params.get('auth_error')), 4000);
+        window.history.replaceState({}, document.title, window.location.pathname);
+      } else if (params.get('logged_out')) {
+        toast('Signed out successfully.');
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
       updateVoiceButtons();
     });
 
@@ -1340,26 +1380,185 @@
     function closeSettings() { document.getElementById('settings').classList.remove('open'); }
 
     // ══════════════════════════════════════════════════════════════════════
-    //  LOGIN
+    //  AUTHENTICATION & GOOGLE LOGIN
     // ══════════════════════════════════════════════════════════════════════
-    function openLogin() { document.getElementById('login-modal').classList.add('open'); }
-    function closeLogin() { document.getElementById('login-modal').classList.remove('open'); }
+    let googleClientId = '';
+
+    function handleUserClick() {
+      if (state.loggedIn) {
+        openUserMenu();
+      } else {
+        openLogin();
+      }
+    }
+
+    function openUserMenu() {
+      const av = document.getElementById('u-modal-avatar');
+      const name = document.getElementById('u-modal-name');
+      const email = document.getElementById('u-modal-email');
+      if (state.user && state.user.picture) {
+        av.innerHTML = `<img src="${esc(state.user.picture)}" alt="${esc(state.user.name)}" style="width:100%;height:100%;object-fit:cover;">`;
+      } else {
+        av.textContent = (state.user && state.user.initial) || 'U';
+      }
+      name.textContent = (state.user && state.user.name) || 'User';
+      email.textContent = (state.user && state.user.email) || '';
+      document.getElementById('user-modal').classList.add('open');
+    }
+
+    function closeUserMenu() {
+      document.getElementById('user-modal').classList.remove('open');
+    }
+
+    function openLogin() {
+      document.getElementById('login-modal').classList.add('open');
+      if (googleClientId && window.google && window.google.accounts) {
+        setupGoogleIdentity();
+      }
+    }
+
+    function closeLogin() {
+      document.getElementById('login-modal').classList.remove('open');
+    }
+
+    async function initGoogleAuth() {
+      try {
+        const res = await fetch('/auth/config');
+        if (res.ok) {
+          const cfg = await res.json();
+          googleClientId = cfg.google_client_id || '';
+          if (googleClientId && window.google && window.google.accounts) {
+            setupGoogleIdentity();
+          }
+        }
+      } catch (e) {
+        console.warn('[Auth] Failed to load auth config:', e);
+      }
+    }
+
+    function setupGoogleIdentity() {
+      if (!window.google || !googleClientId) return;
+      try {
+        google.accounts.id.initialize({
+          client_id: googleClientId,
+          callback: handleGoogleCredentialResponse,
+          auto_select: false,
+          cancel_on_tap_outside: true,
+        });
+      } catch (err) {
+        console.warn('[Auth] Google Identity initialization error:', err);
+      }
+    }
+
+    async function handleGoogleCredentialResponse(response) {
+      if (!response || !response.credential) return;
+      try {
+        toast('Verifying Google account...', 2000);
+        const res = await fetch('/auth/google/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ credential: response.credential }),
+        });
+        const data = await res.json();
+        if (res.ok && data.success && data.user) {
+          state.loggedIn = true;
+          state.user = {
+            id: data.user.id,
+            name: data.user.name,
+            email: data.user.email,
+            picture: data.user.picture,
+            initial: (data.user.name || 'U')[0].toUpperCase(),
+            plan: 'Pro · Unlimited',
+          };
+          applyUser();
+          closeLogin();
+          toast(`Welcome, ${state.user.name}!`);
+        } else {
+          toast('⚠️ ' + (data.error || 'Google login failed'));
+        }
+      } catch (e) {
+        toast('⚠️ Authentication error: ' + e.message);
+      }
+    }
+
     function loginGoogle() {
+      if (window.google && googleClientId) {
+        try {
+          google.accounts.id.prompt((notification) => {
+            if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+              // Fallback to server-side redirect flow
+              window.location.href = '/auth/google/login';
+            }
+          });
+          return;
+        } catch (e) {
+          console.warn('[Auth] Google prompt error, falling back to redirect:', e);
+        }
+      }
+      // Redirect to Google OAuth endpoint
+      window.location.href = '/auth/google/login';
       state.loggedIn = true;
       state.user = { name: 'Legal Practitioner', initial: 'LP', plan: 'Pro · Unlimited' };
       applyUser(); closeLogin(); toast('Signed in as Legal Practitioner');
     }
+
     function loginEmail() {
       const em = document.getElementById('m-email').value || 'advocate@supremecourt.org.bd';
       const name = em.split('@')[0];
       state.loggedIn = true;
-      state.user = { name, initial: name[0].toUpperCase(), plan: 'Free · 10 queries/day' };
-      applyUser(); closeLogin(); toast('Signed in as ' + name);
+      state.user = { name, email: em, initial: name[0].toUpperCase(), plan: 'Free · 10 queries/day' };
+      applyUser();
+      closeLogin();
+      toast('Signed in as ' + name);
     }
+
+    async function logout() {
+      try {
+        await fetch('/auth/logout', { method: 'POST' });
+      } catch (e) {
+        console.warn('[Auth] Logout error:', e);
+      }
+      state.loggedIn = false;
+      state.user = { name: 'Guest User', initial: 'G', plan: 'Free · 5 queries/day' };
+      applyUser();
+      closeUserMenu();
+      toast('Signed out successfully.');
+    }
+
+    async function checkAuthStatus() {
+      try {
+        const res = await fetch('/auth/me');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.authenticated && data.user) {
+            state.loggedIn = true;
+            state.user = {
+              id: data.user.id,
+              name: data.user.name,
+              email: data.user.email,
+              picture: data.user.picture,
+              initial: (data.user.name || 'U')[0].toUpperCase(),
+              plan: 'Pro · Unlimited',
+            };
+            applyUser();
+          }
+        }
+      } catch (e) {
+        console.warn('[Auth] checkAuthStatus error:', e);
+      }
+    }
+
     function applyUser() {
-      document.getElementById('u-av').textContent = state.user.initial;
-      document.getElementById('u-name').textContent = state.user.name;
-      document.getElementById('u-plan').textContent = state.user.plan;
+      const uAv = document.getElementById('u-av');
+      const uName = document.getElementById('u-name');
+      const uPlan = document.getElementById('u-plan');
+      if (state.loggedIn && state.user.picture) {
+        uAv.innerHTML = `<img src="${esc(state.user.picture)}" alt="${esc(state.user.name)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+      } else {
+        uAv.textContent = state.user.initial || 'G';
+      }
+      uName.textContent = state.user.name;
+      uPlan.textContent = state.user.plan;
     }
 
     // ══════════════════════════════════════════════════════════════════════
